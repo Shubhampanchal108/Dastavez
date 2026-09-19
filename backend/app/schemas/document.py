@@ -1,7 +1,29 @@
+from typing import Any
 import uuid
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
+
+
+class DocumentAiResultResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    document_id: uuid.UUID
+    provider: str
+    model: str
+    confidence: float
+    document_type: str
+    fields: dict[str, Any]
+    missing_fields: list[str]
+    warnings: list[str]
+    validation_status: str
+    required_fields: list[str]
+    present_fields: list[str]
+    consistency_checks: list[dict[str, Any]]
+    raw_text: str | None = None
+    created_at: datetime
+    updated_at: datetime
 
 
 class DocumentMetadata(BaseModel):
@@ -23,6 +45,8 @@ class DocumentMetadata(BaseModel):
     file_size: int | None
     sha256_hash: str | None
     status: str
+    ai_confidence: float | None = None
+    validation_status: str | None = None
     uploaded_by: uuid.UUID
     created_at: datetime
     updated_at: datetime
@@ -41,6 +65,8 @@ class DocumentListItem(BaseModel):
     file_size: int | None
     sha256_hash: str | None
     status: str
+    ai_confidence: float | None = None
+    validation_status: str | None = None
     uploaded_by: uuid.UUID
     created_at: datetime
     updated_at: datetime

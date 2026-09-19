@@ -3,6 +3,7 @@ from app.models.blockchain_record import BlockchainRecord
 from app.models.case import Case
 from app.models.chain_of_custody import ChainOfCustody
 from app.models.document import Document
+from app.models.document_ai_result import DocumentAiResult
 from app.models.document_transfer import DocumentTransfer
 from app.models.document_version import DocumentVersion
 from app.models.user import User
@@ -14,6 +15,7 @@ __all__ = [
     "Case",
     "ChainOfCustody",
     "Document",
+    "DocumentAiResult",
     "DocumentTransfer",
     "DocumentVersion",
     "User",

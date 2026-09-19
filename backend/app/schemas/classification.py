@@ -16,7 +16,7 @@ DocumentType = Literal[
 
 
 class ClassificationFields(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     case_id: str | None = None
     document_date: str | None = None
@@ -28,7 +28,7 @@ class ClassificationFields(BaseModel):
 
 
 class ClassificationResult(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     document_type: DocumentType
     confidence: float = Field(ge=0.0, le=1.0)

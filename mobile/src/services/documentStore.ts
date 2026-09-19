@@ -4,6 +4,7 @@ import { INITIAL_DOCUMENTS, DmsDocument, AuditLogRecord, INITIAL_AUDIT_LOGS } fr
 import { DmsApi } from './api';
 
 export interface NewDocumentPayload {
+  id?: string;
   case_id: string;
   original_filename: string;
   document_type: string;
@@ -15,6 +16,8 @@ export interface NewDocumentPayload {
   description?: string;
   uploader?: string;
   uploader_role?: string;
+  ai_confidence?: number;
+  validation_status?: string;
 }
 
 // In-memory persistent state for the prototype session
@@ -49,7 +52,7 @@ export const DocumentStore = {
     ).join('')}`;
 
     const newDoc: DmsDocument = {
-      id: docId,
+      id: payload.id || docId,
       case_id: payload.case_id,
       original_filename: payload.original_filename,
       document_type: payload.document_type || 'General Document',
@@ -66,6 +69,8 @@ export const DocumentStore = {
       blockchain_tx: randomTx,
       block_number: randomBlock,
       summary: payload.description || 'Verified and cryptographically anchored in local evidence ledger.',
+      ai_confidence: payload.ai_confidence,
+      validation_status: payload.validation_status || 'COMPLETE',
     };
 
     // Prepend to top of list so it shows immediately on Dashboard & Documents
@@ -164,37 +169,44 @@ export const DocumentStore = {
   },
 
   /**
-   * Sync with live FastAPI backend if available
+   * Sync with live FastAPI backend & PostgreSQL
    */
   async syncWithBackend(): Promise<boolean> {
     try {
+      await DmsApi.ensureSession();
       const res = await DmsApi.listDocuments(50, 0);
       if (res.data && Array.isArray(res.data) && res.data.length > 0) {
         // Merge backend documents
         const backendDocs: DmsDocument[] = res.data.map((item: any) => ({
-          id: item.id,
+          id: String(item.id),
           case_id: item.case_id || 'CASE-LIVE',
           original_filename: item.original_filename || 'document.pdf',
           document_type: item.document_type || 'Standard',
-          department: item.department || 'Investigation',
+          department: item.department || 'Investigation Bureau',
           sensitivity: item.sensitivity || 'HIGH',
           mime_type: item.mime_type || 'application/pdf',
           file_size: item.file_size || 1024 * 1024,
           sha256_hash: item.sha256_hash || 'hash',
           status: item.status || 'VERIFIED',
           created_at: item.created_at || new Date().toISOString(),
-          uploader: item.uploader_name || 'Officer',
-          uploader_role: item.uploader_role || 'Investigator',
+          uploader: item.uploader_name || 'Det. Vance',
+          uploader_role: item.uploader_role || 'Senior Investigator',
           version: 'v1.0',
+          ai_confidence: item.ai_confidence,
+          validation_status: item.validation_status || 'COMPLETE',
+          summary: `Stored in PostgreSQL. AI Confidence: ${
+            item.ai_confidence ? (item.ai_confidence * 100).toFixed(1) + '%' : 'Pending'
+          }`,
         }));
 
-        // Avoid duplicates
-        const existingIds = new Set(documentsState.map((d) => d.id));
-        const newOnes = backendDocs.filter((d) => !existingIds.has(d.id));
-        if (newOnes.length > 0) {
-          documentsState = [...newOnes, ...documentsState];
-          notifyListeners();
-        }
+        // Replace or merge with state
+        const backendMap = new Map(backendDocs.map((d) => [d.id, d]));
+        const updatedState = documentsState.map((d) => (backendMap.has(d.id) ? backendMap.get(d.id)! : d));
+        const currentIds = new Set(updatedState.map((d) => d.id));
+        const newOnes = backendDocs.filter((d) => !currentIds.has(d.id));
+
+        documentsState = [...newOnes, ...updatedState];
+        notifyListeners();
         return true;
       }
       return false;
@@ -211,6 +223,7 @@ export function useDocuments() {
   const [docs, setDocs] = useState<DmsDocument[]>(() => DocumentStore.getDocuments());
 
   useEffect(() => {
+    DocumentStore.syncWithBackend();
     const unsubscribe = DocumentStore.subscribe(() => {
       setDocs(DocumentStore.getDocuments());
     });

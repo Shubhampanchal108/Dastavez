@@ -53,7 +53,7 @@ def get_temporary_user(db: Session) -> User:
 @router.post("/upload", response_model=DocumentMetadata, status_code=status.HTTP_201_CREATED)
 def upload_document(
     file: UploadFile = File(...),
-    case_id: uuid.UUID = Form(...),
+    case_id: str = Form(...),
     document_type: str | None = Form(None),
     department: str | None = Form(None),
     sensitivity: str | None = Form(None),
@@ -61,27 +61,68 @@ def upload_document(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles("ADMIN", "INVESTIGATOR")),
 ):
-    if db.query(Case).filter(Case.id == case_id).first() is None:
-        raise HTTPException(status_code=404, detail="Case not found.")
+    case = None
+    try:
+        case_uuid = uuid.UUID(case_id.strip())
+        case = db.get(Case, case_uuid)
+    except (ValueError, TypeError):
+        pass
+
+    if case is None:
+        case = db.query(Case).filter(Case.case_number == case_id.strip()).first()
+
+    if case is None:
+        case = Case(
+            case_number=case_id.strip(),
+            title=f"Investigation Registry {case_id.strip()}",
+            department=department or "Investigation Department",
+            status="open",
+            created_by=current_user.id if current_user else get_temporary_user(db).id,
+        )
+        db.add(case)
+        db.flush()
+
     header = file.file.read(16)
     file.file.seek(0)
     safe_filename = validate_file(file, header)
     document_id = uuid.uuid4()
-    cloudinary_public_id = f"DMS/documents/{case_id}/{document_id}"
+    cloudinary_public_id = f"DMS/documents/{case.id}/{document_id}"
     cloudinary_uploaded = False
+
     try:
         content, file_hash, file_size = read_and_hash_upload(file)
-        cloudinary_result = upload_to_cloudinary(content, str(case_id), str(document_id))
-        cloudinary_uploaded = True
+        storage_path = ""
+        storage_provider = "local"
+        c_public_id = None
+        c_res_type = None
+        c_version = None
+
+        try:
+            cloudinary_result = upload_to_cloudinary(content, str(case.id), str(document_id))
+            cloudinary_uploaded = True
+            storage_path = f"cloudinary://{cloudinary_result['public_id']}"
+            storage_provider = "cloudinary"
+            c_public_id = cloudinary_result["public_id"]
+            c_res_type = cloudinary_result.get("resource_type", "raw")
+            c_version = cloudinary_result.get("version")
+        except Exception:
+            import os
+            os.makedirs("uploads", exist_ok=True)
+            local_dest = os.path.join("uploads", f"{document_id}_{safe_filename}")
+            with open(local_dest, "wb") as f:
+                f.write(content.getvalue())
+            storage_path = f"local://{local_dest}"
+            storage_provider = "local"
+
         document = Document(
             id=document_id,
-            case_id=case_id,
+            case_id=case.id,
             original_filename=safe_filename,
-            storage_path=f"cloudinary://{cloudinary_result['public_id']}",
-            storage_provider="cloudinary",
-            cloudinary_public_id=cloudinary_result["public_id"],
-            cloudinary_resource_type=cloudinary_result.get("resource_type", "raw"),
-            cloudinary_version=cloudinary_result.get("version"),
+            storage_path=storage_path,
+            storage_provider=storage_provider,
+            cloudinary_public_id=c_public_id,
+            cloudinary_resource_type=c_res_type,
+            cloudinary_version=c_version,
             description=description,
             document_type=document_type,
             department=department,
@@ -90,13 +131,22 @@ def upload_document(
             file_size=file_size,
             sha256_hash=file_hash,
             status="PENDING_VALIDATION",
-            uploaded_by=get_temporary_user(db).id,
+            uploaded_by=current_user.id if current_user else get_temporary_user(db).id,
         )
         db.add(document)
         create_initial_version(db, document)
         db.commit()
         db.refresh(document)
-        record_audit_event(db, current_user.id, "DOCUMENT_UPLOADED", "document", document.id, "SUCCESS", {"storage_provider": document.storage_provider}, document_id=document.id)
+        record_audit_event(
+            db,
+            current_user.id,
+            "DOCUMENT_UPLOADED",
+            "document",
+            document.id,
+            "SUCCESS",
+            {"storage_provider": document.storage_provider},
+            document_id=document.id,
+        )
         db.commit()
         return document
     except Exception:
@@ -229,7 +279,7 @@ def validate_document_required_fields(document_id: uuid.UUID, db: Session = Depe
     document = db.get(Document, document_id)
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found.")
-    classification = get_classification(str(document_id))
+    classification = get_classification(str(document_id), db=db)
     if classification is None:
         raise HTTPException(status_code=422, detail="Classify this document first, then run required-field validation.")
     result = validate_required_fields(classification)
@@ -252,7 +302,7 @@ def validate_document_metadata(document_id: uuid.UUID, db: Session = Depends(get
     document = db.get(Document, document_id)
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found.")
-    classification = get_classification(str(document_id))
+    classification = get_classification(str(document_id), db=db)
     if classification is None:
         raise HTTPException(status_code=422, detail="Classify this document first, then run metadata consistency checking.")
     metadata = {

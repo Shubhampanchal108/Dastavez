@@ -21,6 +21,8 @@ if __name__ == "__main__":
         "cloudinary_public_id": "ALTER TABLE documents ADD COLUMN cloudinary_public_id VARCHAR(1000)",
         "cloudinary_resource_type": "ALTER TABLE documents ADD COLUMN cloudinary_resource_type VARCHAR(50)",
         "cloudinary_version": "ALTER TABLE documents ADD COLUMN cloudinary_version INTEGER",
+        "ai_confidence": "ALTER TABLE documents ADD COLUMN ai_confidence DOUBLE PRECISION",
+        "validation_status": "ALTER TABLE documents ADD COLUMN validation_status VARCHAR(50)",
     }
     version_migrations = {
         "version_original_filename": "ALTER TABLE document_versions ADD COLUMN original_filename VARCHAR(255) NOT NULL DEFAULT 'legacy-document'",

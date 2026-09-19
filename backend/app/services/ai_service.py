@@ -10,36 +10,169 @@ from app.schemas.classification import ClassificationResult
 
 load_dotenv()
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
+GROQ_BASE_URL = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1").rstrip("/")
+
+
+def get_ai_provider() -> str:
+    provider = os.getenv("AI_PROVIDER", "").strip().lower()
+    if provider in ("groq", "ollama"):
+        return provider
+    if os.getenv("GROQ_API_KEY", "").strip():
+        return "groq"
+    return "ollama"
+
+
+def get_ai_model() -> str:
+    provider = get_ai_provider()
+    if provider == "groq":
+        return os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile").strip()
+    return get_ollama_model()
 
 
 def get_ollama_model() -> str:
     model = os.getenv("OLLAMA_MODEL", "").strip()
     if not model:
-        raise HTTPException(status_code=503, detail="No Ollama model is configured. Install a model and set OLLAMA_MODEL in backend/.env.")
+        raise HTTPException(
+            status_code=503,
+            detail="No Ollama model is configured. Install a model and set OLLAMA_MODEL in backend/.env.",
+        )
     return model
 
 
-def generate(prompt: str, json_mode: bool | dict = False) -> str:
+def get_groq_api_key() -> str:
+    key = os.getenv("GROQ_API_KEY", "").strip()
+    if not key:
+        raise HTTPException(
+            status_code=503,
+            detail="Groq is configured as the AI provider, but GROQ_API_KEY is not set in backend/.env.",
+        )
+    return key
+
+
+def _generate_groq(prompt: str, json_mode: bool | dict = False) -> str:
+    api_key = get_groq_api_key()
+    model = get_ai_model()
+    payload = {
+        "model": model,
+        "messages": [
+            {
+                "role": "system",
+                "content": "You are a professional document classifier that extracts structured metadata in valid JSON format.",
+            },
+            {"role": "user", "content": prompt},
+        ],
+        "temperature": 0.1,
+    }
+    if json_mode:
+        payload["response_format"] = {"type": "json_object"}
+
+    request = Request(
+        f"{GROQ_BASE_URL}/chat/completions",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "User-Agent": "DMS-Backend/1.0",
+        },
+        method="POST",
+    )
+    try:
+        with urlopen(request, timeout=30) as response:
+            result = json.loads(response.read().decode("utf-8"))
+        choices = result.get("choices") or []
+        if not choices:
+            raise ValueError("Groq returned no choices in completion response.")
+        text = (choices[0].get("message", {}).get("content") or "").strip()
+        if not text:
+            raise ValueError("Groq returned an empty response.")
+        return text
+    except HTTPError as error:
+        error_body = ""
+        try:
+            error_body = error.read().decode("utf-8")
+        except Exception:
+            pass
+        raise HTTPException(
+            status_code=502,
+            detail=f"Groq API error ({error.code}): {error_body or error.reason}",
+        ) from error
+    except (URLError, TimeoutError, OSError) as error:
+        raise HTTPException(
+            status_code=503,
+            detail="Failed to connect to Groq API. Check your internet connection.",
+        ) from error
+    except (json.JSONDecodeError, ValueError) as error:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Groq returned an invalid response: {error}",
+        ) from error
+
+
+def _generate_ollama(prompt: str, json_mode: bool | dict = False) -> str:
     model = get_ollama_model()
     payload = {"model": model, "prompt": prompt, "stream": False}
     if json_mode:
         payload["format"] = json_mode if isinstance(json_mode, dict) else "json"
-    request = Request(f"{OLLAMA_BASE_URL}/api/generate", data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"}, method="POST")
+    request = Request(
+        f"{OLLAMA_BASE_URL}/api/generate",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
     try:
         with urlopen(request, timeout=60) as response:
-            result = json.loads(response.read())
+            result = json.loads(response.read().decode("utf-8"))
         text = (result.get("response") or result.get("thinking") or "").strip()
         if not text:
             raise ValueError("Ollama returned an empty response")
         return text
     except (HTTPError, URLError, TimeoutError, OSError) as error:
-        raise HTTPException(status_code=503, detail="The local Ollama server is unavailable. Start Ollama and try again.") from error
+        raise HTTPException(
+            status_code=503,
+            detail="The local Ollama server is unavailable. Start Ollama and try again.",
+        ) from error
     except (json.JSONDecodeError, ValueError) as error:
-        raise HTTPException(status_code=502, detail="Ollama returned an invalid response.") from error
+        raise HTTPException(
+            status_code=502,
+            detail="Ollama returned an invalid response.",
+        ) from error
+
+
+def generate(prompt: str, json_mode: bool | dict = False) -> str:
+    provider = get_ai_provider()
+    if provider == "groq":
+        return _generate_groq(prompt, json_mode=json_mode)
+    return _generate_ollama(prompt, json_mode=json_mode)
 
 
 def get_health() -> dict:
-    model = get_ollama_model()
+    provider = get_ai_provider()
+    model = get_ai_model()
+    if provider == "groq":
+        api_key = get_groq_api_key()
+        try:
+            request = Request(
+                f"{GROQ_BASE_URL}/models",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "User-Agent": "DMS-Backend/1.0",
+                },
+                method="GET",
+            )
+            with urlopen(request, timeout=10) as response:
+                json.loads(response.read().decode("utf-8"))
+            return {"status": "ok", "provider": "groq", "model": model}
+        except HTTPError as error:
+            raise HTTPException(
+                status_code=503,
+                detail=f"Groq API authentication failed ({error.code}). Check GROQ_API_KEY in backend/.env.",
+            ) from error
+        except (URLError, TimeoutError, OSError) as error:
+            raise HTTPException(
+                status_code=503,
+                detail="Groq API is unreachable. Check your internet connection.",
+            ) from error
+
     try:
         with urlopen(Request(f"{OLLAMA_BASE_URL}/api/tags"), timeout=10) as response:
             json.loads(response.read())
@@ -49,18 +182,26 @@ def get_health() -> dict:
 
 
 def simple_connection_test() -> str:
-    return generate("Reply with exactly: Ollama connection successful")
+    provider = get_ai_provider()
+    return generate(f"Reply with exactly: {provider.capitalize()} connection successful")
 
 
 def simple_json_test() -> dict:
-    response = generate('Return only JSON with keys "name" and "type". Set name to "Test" and type to "Document".', json_mode=True)
+    provider = get_ai_provider()
+    response = generate(
+        'Return only JSON with keys "name" and "type". Set name to "Test" and type to "Document".',
+        json_mode=True,
+    )
     try:
         result = json.loads(response)
         if not isinstance(result, dict) or result.get("name") != "Test" or result.get("type") != "Document":
             raise ValueError("Unexpected JSON values")
         return result
     except (json.JSONDecodeError, ValueError) as error:
-        raise HTTPException(status_code=502, detail="Ollama did not return the expected JSON test object.") from error
+        raise HTTPException(
+            status_code=502,
+            detail=f"{provider.capitalize()} did not return the expected JSON test object.",
+        ) from error
 
 
 MAX_CLASSIFICATION_TEXT_LENGTH = 12000
@@ -102,9 +243,9 @@ def parse_json_response(response: str) -> dict:
     try:
         parsed, _ = json.JSONDecoder().raw_decode(cleaned)
     except (json.JSONDecodeError, TypeError) as error:
-        raise HTTPException(status_code=502, detail="Ollama returned invalid JSON for classification.") from error
+        raise HTTPException(status_code=502, detail="AI provider returned invalid JSON for classification.") from error
     if not isinstance(parsed, dict):
-        raise HTTPException(status_code=502, detail="Ollama classification response must be a JSON object.")
+        raise HTTPException(status_code=502, detail="AI classification response must be a JSON object.")
     return parsed
 
 
@@ -119,7 +260,7 @@ def classify_text(document_text: str) -> tuple[ClassificationResult, bool, str]:
     try:
         result = ClassificationResult.model_validate(parse_json_response(response))
     except (ValueError, TypeError) as error:
-        raise HTTPException(status_code=502, detail="Ollama returned an invalid classification response.") from error
+        raise HTTPException(status_code=502, detail=f"AI provider returned an invalid classification response: {error}") from error
     if truncated:
         result.warnings.append("AI input was truncated to a safe maximum length.")
-    return result, truncated, get_ollama_model()
+    return result, truncated, get_ai_model()

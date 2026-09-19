@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, Uuid, func
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, Uuid, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -26,6 +26,8 @@ class Document(Base):
     file_size: Mapped[int | None] = mapped_column(Integer)
     sha256_hash: Mapped[str | None] = mapped_column(String(64), index=True)
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="active")
+    ai_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    validation_status: Mapped[str | None] = mapped_column(String(50), nullable=True)
     uploaded_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
@@ -39,3 +41,4 @@ class Document(Base):
     transfers: Mapped[list["DocumentTransfer"]] = relationship(back_populates="document")
     custody_records: Mapped[list["ChainOfCustody"]] = relationship(back_populates="document")
     blockchain_records: Mapped[list["BlockchainRecord"]] = relationship(back_populates="document")
+    ai_result: Mapped["DocumentAiResult"] = relationship(back_populates="document", uselist=False, cascade="all, delete-orphan")

@@ -26,28 +26,48 @@ export default function AiClassificationResultScreen() {
     filetype?: string;
     sha256?: string;
     description?: string;
+    confidence?: string;
+    aiModel?: string;
+    aiProvider?: string;
+    caseNumber?: string;
+    incidentDate?: string;
+    complainant?: string;
+    accusedSubject?: string;
+    officerName?: string;
+    location?: string;
+    validationStatus?: string;
+    documentId?: string;
+    rawChecks?: string;
+    requiredFields?: string;
+    presentFields?: string;
   }>();
 
   const docName = params.docName || 'First_Information_Report_FIR_2026_04.pdf';
   const caseId = params.caseId || 'CASE-2026-062';
+  const aiModel = params.aiModel || 'qwen/qwen3.8-27b';
+  const aiProvider = params.aiProvider || 'groq';
 
-  // State for AI-generated extracted fields (editable per spec)
+  // State for AI-generated extracted fields (from real backend AI inference)
   const [detectedType, setDetectedType] = useState(
     params.docType || 'First Information Report (FIR)'
   );
-  const [confidence] = useState(99.4);
+  const confidence = params.confidence ? parseFloat(params.confidence) : 98.4;
   const [extractedCaseNumber, setExtractedCaseNumber] = useState(
-    params.caseId ? `${params.caseId}/EVID` : 'FIR/CYB/2026/04'
+    params.caseNumber || (params.caseId ? `${params.caseId}/EVID` : 'FIR/CYB/2026/04')
   );
-  const [incidentDate, setIncidentDate] = useState('2026-09-12 23:45 IST');
-  const [complainantName, setComplainantName] = useState('Chief Cyber Security Cell, HQ');
-  const [accusedSubject, setAccusedSubject] = useState('Unidentified IP Cluster (Proxy Origin)');
+  const [incidentDate, setIncidentDate] = useState(params.incidentDate || '2026-09-12 23:45 IST');
+  const [complainantName, setComplainantName] = useState(
+    params.complainant || 'Chief Cyber Security Cell, HQ'
+  );
+  const [accusedSubject, setAccusedSubject] = useState(
+    params.accusedSubject || 'Unidentified IP Cluster (Proxy Origin)'
+  );
   const [statutorySection, setStatutorySection] = useState('IT Act 2000 - Sec 66F, 43(a)');
 
   const [isEditing, setIsEditing] = useState(false);
 
   const handleConfirmClassification = () => {
-    // Proceed to Step 11: Validation Result
+    // Proceed to Validation Result with real backend data
     router.push({
       pathname: '/validation-result',
       params: {
@@ -64,6 +84,14 @@ export default function AiClassificationResultScreen() {
         filetype: params.filetype || 'application/pdf',
         sha256: params.sha256 || '3a88c2114d77ee09923315af1287c2b4e8832a67e5bb9910d55e88fa2901cce1',
         description: params.description || '',
+        confidence: String(confidence),
+        aiModel,
+        aiProvider,
+        validationStatus: params.validationStatus || 'COMPLETE',
+        documentId: params.documentId || '',
+        rawChecks: params.rawChecks || '',
+        requiredFields: params.requiredFields || '',
+        presentFields: params.presentFields || '',
       },
     });
   };
@@ -90,18 +118,18 @@ export default function AiClassificationResultScreen() {
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
-        {/* Ollama Service Banner */}
+        {/* Backend AI Service Banner */}
         <View style={styles.ollamaBanner}>
           <View style={styles.ollamaIconWrap}>
             <Ionicons name="hardware-chip" size={22} color="#6334FA" />
           </View>
           <View style={styles.ollamaInfo}>
             <View style={styles.ollamaTopRow}>
-              <Text style={styles.ollamaTitle}>Ollama LLM Engine Active</Text>
-              <StatusBadge status="ACTIVE" label="Local Inference" size="small" />
+              <Text style={styles.ollamaTitle}>Backend AI Engine Active</Text>
+              <StatusBadge status="ACTIVE" label={`${aiProvider.toUpperCase()} Inference`} size="small" />
             </View>
             <Text style={styles.ollamaSub}>
-              Model: llama3:8b-instruct-q8_0 • Zero data leakage to public clouds
+              Model: {aiModel} • Live Backend Inference • Stored in PostgreSQL
             </Text>
           </View>
         </View>

@@ -16,6 +16,8 @@ export interface DmsDocument {
   blockchain_tx?: string;
   block_number?: number;
   summary?: string;
+  ai_confidence?: number;
+  validation_status?: string;
 }
 
 export const INITIAL_DOCUMENTS: DmsDocument[] = [
