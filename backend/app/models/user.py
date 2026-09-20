@@ -23,6 +23,8 @@ class User(Base):
     uploaded_documents: Mapped[list["Document"]] = relationship(back_populates="uploader")
     uploaded_versions: Mapped[list["DocumentVersion"]] = relationship(back_populates="uploader")
     audit_logs: Mapped[list["AuditLog"]] = relationship(back_populates="user")
+    authenticator_devices: Mapped[list["AuthenticatorDevice"]] = relationship(back_populates="user")
+    authenticator_challenges: Mapped[list["AuthenticatorChallenge"]] = relationship(back_populates="user")
     sent_transfers: Mapped[list["DocumentTransfer"]] = relationship(
         back_populates="from_user", foreign_keys="DocumentTransfer.from_user_id"
     )

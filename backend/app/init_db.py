@@ -2,6 +2,7 @@ from sqlalchemy import inspect, text
 
 from app.database import Base, SessionLocal, engine
 from app import models
+from app.migrations.authenticator_foundation_001 import upgrade_authenticator_foundation
 from app.models.document import Document
 from app.models.document_version import DocumentVersion
 from app.services.version_service import create_initial_version
@@ -9,6 +10,7 @@ from app.services.version_service import create_initial_version
 
 if __name__ == "__main__":
     Base.metadata.create_all(bind=engine)
+    upgrade_authenticator_foundation()
     document_columns = {column["name"] for column in inspect(engine).get_columns("documents")}
     version_columns = {column["name"] for column in inspect(engine).get_columns("document_versions")}
     transfer_columns = {column["name"] for column in inspect(engine).get_columns("document_transfers")}

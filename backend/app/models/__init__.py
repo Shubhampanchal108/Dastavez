@@ -8,6 +8,8 @@ from app.models.document_transfer import DocumentTransfer
 from app.models.document_version import DocumentVersion
 from app.models.user import User
 from app.models.otp_challenge import OTPChallenge
+from app.models.authenticator_device import AuthenticatorDevice
+from app.models.authenticator_challenge import AuthenticatorChallenge
 
 __all__ = [
     "AuditLog",
@@ -20,4 +22,6 @@ __all__ = [
     "DocumentVersion",
     "User",
     "OTPChallenge",
+    "AuthenticatorDevice",
+    "AuthenticatorChallenge",
 ]

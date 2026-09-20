@@ -1,4 +1,5 @@
 import os
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.exc import IntegrityError
@@ -6,9 +7,38 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies.auth import get_current_user, require_roles
+from app.models.authenticator_challenge import AuthenticatorChallenge
+from app.models.authenticator_device import AuthenticatorDevice
 from app.models.user import User
-from app.schemas.auth import AuthUserResponse, LoginRequest, OTPRequiredResponse, OTPTokenResponse, OTPVerifyRequest, RegisterRequest
+from app.schemas.auth import (
+    AuthUserResponse,
+    AuthenticatorChallengeApprovalRequest,
+    AuthenticatorChallengeApprovalResponse,
+    AuthenticatorChallengeStatusResponse,
+    AuthenticatorDeviceRegistrationRequest,
+    AuthenticatorDeviceResponse,
+    AuthenticatorLoginCompletionRequest,
+    AuthenticatorRequiredResponse,
+    LoginChallengeResponse,
+    LoginRequest,
+    OTPRequiredResponse,
+    OTPTokenResponse,
+    OTPVerifyRequest,
+    PendingAuthenticatorChallengeResponse,
+    RegisterRequest,
+)
+from app.services.audit_service import record_audit_event
 from app.services.auth_service import access_token_expiration_seconds, authenticate_user, create_access_token, create_login_otp_challenge, hash_password, normalize_role, verify_login_otp
+from app.services.authenticator_service import (
+    approve_authenticator_challenge,
+    build_authenticator_challenge_payload,
+    consume_authenticator_challenge,
+    create_authenticator_challenge,
+    list_active_devices,
+    register_authenticator_device,
+    revoke_authenticator_device,
+    verify_authenticator_challenge_signature,
+)
 
 
 router = APIRouter(prefix="/api/auth", tags=["authentication"])
@@ -37,16 +67,88 @@ def register_user(request: RegisterRequest, db: Session = Depends(get_db)):
     return AuthUserResponse(user_id=user.id, username=user.email, role=user.role, is_active=user.is_active)
 
 
-@router.post("/login", response_model=OTPRequiredResponse)
+@router.post("/login", response_model=LoginChallengeResponse)
 def login_user(request: LoginRequest, db: Session = Depends(get_db)):
     user = authenticate_user(db, request.email, request.password)
+    active_devices = list_active_devices(db, user.id)
+
+    if active_devices:
+        challenge = create_authenticator_challenge(db, user.id, active_devices[0].id)
+        record_audit_event(
+            db,
+            user.id,
+            "AUTHENTICATOR_REQUIRED",
+            "authenticator_challenge",
+            challenge.id,
+            "PENDING",
+            {"device_id": str(active_devices[0].id), "challenge_type": "AUTHENTICATOR"},
+        )
+        record_audit_event(
+            db,
+            user.id,
+            "LOGIN_CHALLENGE_CREATED",
+            "authenticator_challenge",
+            challenge.id,
+            "PENDING",
+            {"challenge_type": "AUTHENTICATOR"},
+        )
+        db.commit()
+        return AuthenticatorRequiredResponse(
+            status="AUTHENTICATOR_REQUIRED",
+            challenge_id=challenge.id,
+            message="Authenticator approval required.",
+            expires_at=challenge.expires_at,
+        )
+
     challenge = create_login_otp_challenge(db, user)
     return OTPRequiredResponse(
         status="OTP_REQUIRED",
         challenge_id=challenge.id,
         message="OTP verification required.",
         dev_otp=getattr(challenge, "_dev_otp", None),
+        expires_at=challenge.expires_at,
     )
+
+
+@router.get("/authenticator-challenge/{challenge_id}", response_model=AuthenticatorChallengeStatusResponse)
+def get_authenticator_challenge_status(
+    challenge_id: uuid.UUID,
+    db: Session = Depends(get_db),
+):
+    challenge = db.get(AuthenticatorChallenge, challenge_id)
+    if challenge is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Challenge not found.")
+    return AuthenticatorChallengeStatusResponse(
+        challenge_id=challenge.id,
+        status=challenge.status,
+        expires_at=challenge.expires_at,
+    )
+
+
+@router.get("/authenticator-challenges/pending", response_model=list[PendingAuthenticatorChallengeResponse])
+def list_pending_authenticator_challenges(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    challenges = (
+        db.query(AuthenticatorChallenge)
+        .filter(
+            AuthenticatorChallenge.user_id == current_user.id,
+            AuthenticatorChallenge.status == "PENDING",
+            AuthenticatorChallenge.expires_at > __import__("datetime").datetime.now(__import__("datetime").timezone.utc),
+        )
+        .order_by(AuthenticatorChallenge.created_at.desc())
+        .all()
+    )
+    return [
+        PendingAuthenticatorChallengeResponse(
+            challenge_id=challenge.id,
+            created_at=challenge.created_at,
+            expires_at=challenge.expires_at,
+            purpose="AUTHENTICATOR_LOGIN",
+        )
+        for challenge in challenges
+    ]
 
 
 @router.post("/verify-otp", response_model=OTPTokenResponse)
@@ -56,6 +158,247 @@ def verify_otp(request: OTPVerifyRequest, db: Session = Depends(get_db)):
         access_token=create_access_token(user),
         token_type="bearer",
         expires_in=access_token_expiration_seconds(),
+    )
+
+
+@router.post("/authenticator/approve", response_model=AuthenticatorChallengeApprovalResponse)
+def approve_authenticator_login_challenge(
+    request: AuthenticatorChallengeApprovalRequest,
+    db: Session = Depends(get_db),
+):
+    challenge = db.get(AuthenticatorChallenge, request.challenge_id)
+    if challenge is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Challenge not found.")
+    if challenge.status != "PENDING":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Challenge is no longer pending.")
+    if challenge.authenticator_device_id is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Challenge is not bound to a device.")
+    if challenge.expires_at <= __import__("datetime").datetime.now(__import__("datetime").timezone.utc):
+        challenge.status = "EXPIRED"
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Challenge expired.")
+
+    device = db.get(AuthenticatorDevice, challenge.authenticator_device_id)
+    if device is None or device.user_id != challenge.user_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Device is unavailable.")
+    if device.device_identifier != request.device_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Device identifier mismatch.")
+    if device.revoked_at is not None or not device.is_active:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Device is unavailable.")
+    if not device.public_key:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Device public key is not registered.")
+
+    expected_payload = build_authenticator_challenge_payload(challenge, device_identifier=device.device_identifier)
+    if request.payload != expected_payload:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Challenge payload mismatch.")
+    if not verify_authenticator_challenge_signature(device.public_key, request.payload, request.signature):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Signature verification failed.")
+
+    user = db.get(User, challenge.user_id)
+    if user is None or not user.is_active:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User is unavailable.")
+
+    approve_authenticator_challenge(db, user.id, challenge.id, authenticator_device_id=device.id)
+    record_audit_event(
+        db,
+        user.id,
+        "AUTHENTICATOR_LOGIN_APPROVED",
+        "authenticator_challenge",
+        challenge.id,
+        "SUCCESS",
+        {"device_id": device.device_identifier},
+    )
+    db.commit()
+    return AuthenticatorChallengeApprovalResponse(
+        status="APPROVED",
+        challenge_id=challenge.id,
+        message="Login approved.",
+    )
+
+
+@router.post("/login/complete", response_model=OTPTokenResponse)
+def complete_authenticator_login_challenge(
+    request: AuthenticatorLoginCompletionRequest,
+    db: Session = Depends(get_db),
+):
+    challenge = db.get(AuthenticatorChallenge, request.challenge_id)
+    if challenge is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Challenge not found.")
+    if challenge.status != "APPROVED":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Challenge is not approved.")
+    if challenge.expires_at <= __import__("datetime").datetime.now(__import__("datetime").timezone.utc):
+        challenge.status = "EXPIRED"
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Challenge expired.")
+
+    user = db.get(User, challenge.user_id)
+    if user is None or not user.is_active:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User is unavailable.")
+
+    consume_authenticator_challenge(db, user.id, challenge.id)
+    db.commit()
+    return OTPTokenResponse(
+        access_token=create_access_token(user),
+        token_type="bearer",
+        expires_in=access_token_expiration_seconds(),
+    )
+
+
+@router.post("/authenticator/register", response_model=AuthenticatorDeviceResponse)
+def register_authenticator_device_for_user(
+    request: AuthenticatorDeviceRegistrationRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    device_identifier = request.device_id.strip()
+    if not device_identifier:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Device ID is required.")
+
+    existing = (
+        db.query(AuthenticatorDevice)
+        .filter(AuthenticatorDevice.device_identifier == device_identifier)
+        .first()
+    )
+    if existing is not None:
+        if existing.user_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This device identifier is already registered to another user.",
+            )
+        if existing.revoked_at is not None or not existing.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This device has been revoked and cannot be reactivated.",
+            )
+
+        candidate_public_key = request.public_key.strip() if request.public_key and request.public_key.strip() else None
+        if candidate_public_key and not existing.public_key:
+            existing.public_key = candidate_public_key
+        elif candidate_public_key and existing.public_key != candidate_public_key:
+            existing.public_key = candidate_public_key
+
+        record_audit_event(
+            db,
+            current_user.id,
+            "AUTHENTICATOR_REGISTERED",
+            "authenticator_device",
+            existing.id,
+            "SUCCESS",
+            {"device_id": device_identifier, "public_key_present": bool(existing.public_key)},
+        )
+        db.commit()
+        db.refresh(existing)
+        return AuthenticatorDeviceResponse(
+            device_id=str(existing.device_identifier),
+            device_name=existing.device_name,
+            public_key=existing.public_key,
+            is_active=existing.is_active,
+            created_at=existing.created_at,
+            last_used_at=existing.last_used_at,
+        )
+
+    device = register_authenticator_device(
+        db,
+        current_user.id,
+        device_identifier,
+        request.device_name,
+        public_key=request.public_key,
+    )
+    record_audit_event(
+        db,
+        current_user.id,
+        "AUTHENTICATOR_REGISTERED",
+        "authenticator_device",
+        device.id,
+        "SUCCESS",
+        {"device_id": device_identifier, "public_key_present": bool(device.public_key)},
+    )
+    db.commit()
+    return AuthenticatorDeviceResponse(
+        device_id=str(device.device_identifier),
+        device_name=device.device_name,
+        public_key=device.public_key,
+        is_active=device.is_active,
+        created_at=device.created_at,
+        last_used_at=device.last_used_at,
+    )
+
+
+@router.get("/authenticator/devices", response_model=list[AuthenticatorDeviceResponse])
+def list_authenticator_devices_for_user(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    devices = (
+        db.query(AuthenticatorDevice)
+        .filter(AuthenticatorDevice.user_id == current_user.id)
+        .order_by(AuthenticatorDevice.created_at.desc())
+        .all()
+    )
+    return [
+        AuthenticatorDeviceResponse(
+            device_id=str(device.device_identifier),
+            device_name=device.device_name,
+            public_key=device.public_key,
+            is_active=device.is_active,
+            created_at=device.created_at,
+            last_used_at=device.last_used_at,
+        )
+        for device in devices
+    ]
+
+
+@router.post("/authenticator/devices/{device_id}/revoke", response_model=AuthenticatorDeviceResponse)
+def revoke_authenticator_device_for_user(
+    device_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    device = (
+        db.query(AuthenticatorDevice)
+        .filter(AuthenticatorDevice.device_identifier == device_id, AuthenticatorDevice.user_id == current_user.id)
+        .first()
+    )
+    if device is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found.")
+
+    if device.revoked_at is not None:
+        record_audit_event(
+            db,
+            current_user.id,
+            "AUTHENTICATOR_REVOKED",
+            "authenticator_device",
+            device.id,
+            "DENIED",
+            {"device_id": device.device_identifier},
+        )
+        db.commit()
+        return AuthenticatorDeviceResponse(
+            device_id=str(device.device_identifier),
+            device_name=device.device_name,
+            public_key=device.public_key,
+            is_active=device.is_active,
+            created_at=device.created_at,
+            last_used_at=device.last_used_at,
+        )
+
+    revoked = revoke_authenticator_device(db, current_user.id, device.id)
+    record_audit_event(
+        db,
+        current_user.id,
+        "AUTHENTICATOR_REVOKED",
+        "authenticator_device",
+        revoked.id,
+        "SUCCESS",
+        {"device_id": str(revoked.device_identifier)},
+    )
+    db.commit()
+    return AuthenticatorDeviceResponse(
+        device_id=str(revoked.device_identifier),
+        device_name=revoked.device_name,
+        is_active=revoked.is_active,
+        created_at=revoked.created_at,
+        last_used_at=revoked.last_used_at,
     )
 
 

@@ -32,11 +32,50 @@ class TokenResponse(BaseModel):
     role: str
 
 
-class OTPRequiredResponse(BaseModel):
+class LoginChallengeResponse(BaseModel):
     status: str
     challenge_id: uuid.UUID
     message: str
     dev_otp: str | None = None
+    expires_at: datetime | None = None
+
+
+class OTPRequiredResponse(LoginChallengeResponse):
+    pass
+
+
+class AuthenticatorRequiredResponse(LoginChallengeResponse):
+    pass
+
+
+class AuthenticatorChallengeStatusResponse(BaseModel):
+    challenge_id: uuid.UUID
+    status: str
+    expires_at: datetime
+
+
+class PendingAuthenticatorChallengeResponse(BaseModel):
+    challenge_id: uuid.UUID
+    created_at: datetime
+    expires_at: datetime
+    purpose: str = "AUTHENTICATOR_LOGIN"
+
+
+class AuthenticatorChallengeApprovalResponse(BaseModel):
+    status: str
+    challenge_id: uuid.UUID
+    message: str
+
+
+class AuthenticatorChallengeApprovalRequest(BaseModel):
+    challenge_id: uuid.UUID
+    device_id: str = Field(min_length=1, max_length=255)
+    payload: str = Field(min_length=1, max_length=4096)
+    signature: str = Field(min_length=1, max_length=4096)
+
+
+class AuthenticatorLoginCompletionRequest(BaseModel):
+    challenge_id: uuid.UUID
 
 
 class OTPVerifyRequest(BaseModel):
@@ -55,3 +94,18 @@ class AuthUserResponse(BaseModel):
     username: str
     role: str
     is_active: bool
+
+
+class AuthenticatorDeviceRegistrationRequest(BaseModel):
+    device_id: str = Field(min_length=1, max_length=255)
+    device_name: str | None = Field(default=None, min_length=1, max_length=150)
+    public_key: str | None = Field(default=None, min_length=1, max_length=4096)
+
+
+class AuthenticatorDeviceResponse(BaseModel):
+    device_id: str
+    device_name: str | None = None
+    public_key: str | None = None
+    is_active: bool
+    created_at: datetime
+    last_used_at: datetime | None = None
