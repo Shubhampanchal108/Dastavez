@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   Fingerprint,
@@ -15,33 +15,25 @@ import {
   FileCheck,
 } from 'lucide-react';
 import { useDocuments } from '@/lib/store';
-import { DmsDocument } from '@/lib/mockData';
+import { DmsApi } from '@/lib/api';
 
 function IntegrityContent() {
   const searchParams = useSearchParams();
   const initialId = searchParams.get('id');
   const documents = useDocuments();
 
-  const [selectedDocId, setSelectedDocId] = useState<string>(initialId || documents[0]?.id || 'doc-101');
+  const [selectedDocId, setSelectedDocId] = useState<string>(initialId || '');
   const [isVerifying, setIsVerifying] = useState(false);
-  const [verificationResult, setVerificationResult] = useState<any>({
-    status: 'VERIFIED',
-    matchPercentage: 100,
-    timestamp: new Date().toLocaleString(),
-  });
+  const [verificationResult, setVerificationResult] = useState<any>(null);
 
   const activeDoc = documents.find((d) => d.id === selectedDocId) || documents[0];
 
-  const handleRunVerify = () => {
+  const handleRunVerify = async () => {
+    if (!activeDoc) return;
     setIsVerifying(true);
-    setTimeout(() => {
-      setIsVerifying(false);
-      setVerificationResult({
-        status: 'VERIFIED',
-        matchPercentage: 100,
-        timestamp: new Date().toLocaleString(),
-      });
-    }, 800);
+    const response = await DmsApi.getBlockchainVerify(activeDoc.id);
+    setVerificationResult(response.data || { error: response.error || 'Verification unavailable' });
+    setIsVerifying(false);
   };
 
   if (!activeDoc) {
@@ -86,25 +78,25 @@ function IntegrityContent() {
       </div>
 
       {/* Verification Status Banner */}
-      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6 text-emerald-950 flex items-start gap-4">
+      {verificationResult && <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6 text-emerald-950 flex items-start gap-4">
         <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-300">
           <CheckCircle2 className="w-6 h-6" />
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="text-base font-bold text-emerald-900">Zero-Tamper Verification Confirmed</h3>
+            <h3 className="text-base font-bold text-emerald-900">Verification Result</h3>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-800">
-              100% BIT-FOR-BIT MATCH
+              {verificationResult.status || 'AVAILABLE'}
             </span>
           </div>
           <p className="text-xs text-emerald-800 mt-1 leading-relaxed">
-            The recomputed SHA-256 cryptographic digest matches the immutable PostgreSQL timestamped record and Ethereum Smart Contract root anchor. Document integrity is legally and forensic valid.
+            {verificationResult.error || 'Verification response received from the backend.'}
           </p>
           <p className="text-[11px] text-emerald-700 mt-2 font-mono">
-            Verification Timestamp: {verificationResult.timestamp}
+            Verification Timestamp: {verificationResult.timestamp || 'Unavailable'}
           </p>
         </div>
-      </div>
+      </div>}
 
       {/* Triple Verification Comparison Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">

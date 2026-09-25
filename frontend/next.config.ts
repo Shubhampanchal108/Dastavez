@@ -2,18 +2,25 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   async rewrites() {
+    const backendBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || (
+      process.env.NODE_ENV === "development"
+        ? "http://localhost:8000"
+        : (() => {
+            throw new Error("NEXT_PUBLIC_API_BASE_URL must be configured in production.");
+          })()
+    );
     return [
       {
         source: "/api/:path*",
-        destination: "http://127.0.0.1:8000/api/:path*",
+        destination: `${backendBaseUrl}/api/:path*`,
       },
       {
         source: "/health/:path*",
-        destination: "http://127.0.0.1:8000/health/:path*",
+        destination: `${backendBaseUrl}/health/:path*`,
       },
       {
         source: "/health",
-        destination: "http://127.0.0.1:8000/health",
+        destination: `${backendBaseUrl}/health`,
       },
     ];
   },

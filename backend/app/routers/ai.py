@@ -24,6 +24,7 @@ from app.services.classification_store import get_ai_validation_record, save_cla
 from app.services.metadata_validation_service import compare_metadata
 from app.services.text_extraction import download_cloudinary_document, extract_text_from_pdf
 from app.services.validation_service import validate_required_fields
+from app.services.resource_authorization import require_document_access
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
@@ -55,15 +56,15 @@ def classify_sample_text(_: User = Depends(require_roles("ADMIN"))):
 def get_document_ai_result(
     document_id: uuid.UUID,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     """Retrieve the stored AI classification accuracy and validation result from PostgreSQL."""
+    document = db.get(Document, document_id)
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found.")
+    require_document_access(db, document, current_user)
     record = get_ai_validation_record(str(document_id), db=db)
     if not record:
-        # Check if parent document exists
-        document = db.get(Document, document_id)
-        if not document:
-            raise HTTPException(status_code=404, detail="Document not found.")
         raise HTTPException(
             status_code=404,
             detail="AI classification and validation has not been performed on this document yet.",
@@ -238,6 +239,16 @@ def analyze_pipeline_payload(
     document_type = payload.get("doc_type", "First Information Report (FIR)")
     department = payload.get("department", "Investigation Bureau")
     doc_id = payload.get("document_id")
+
+    if doc_id:
+        try:
+            document_id = uuid.UUID(str(doc_id))
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=422, detail="document_id must be a valid UUID.")
+        document = db.get(Document, document_id)
+        if document is None:
+            raise HTTPException(status_code=404, detail="Document not found.")
+        require_document_access(db, document, current_user)
 
     if not text.strip():
         text = (

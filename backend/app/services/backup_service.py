@@ -10,9 +10,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.engine import make_url
 
+from app.database import database_url
 from app.models.document import Document
 from app.models.document_version import DocumentVersion
+from app.services.backup_storage import BackupStorageError, store_backup
 from app.services.storage import sanitize_filename
 from app.services.text_extraction import download_cloudinary_document
 
@@ -20,7 +23,7 @@ from app.services.text_extraction import download_cloudinary_document
 logger = logging.getLogger(__name__)
 BACKUP_VERSION = "1.0"
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
-BACKUPS_ROOT = BACKEND_ROOT / "backups"
+BACKUPS_ROOT = Path(os.getenv("BACKUP_DIR", str(BACKEND_ROOT / "backups")))
 
 
 class BackupError(Exception):
@@ -43,7 +46,9 @@ def _pg_dump_path() -> str:
 
 def _database_dump(destination: Path) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
-    password = os.getenv("POSTGRES_PASSWORD", "")
+    configured_url = make_url(str(database_url))
+    if not configured_url.host or not configured_url.database or not configured_url.username:
+        raise BackupError("DATABASE_URL is incomplete for PostgreSQL backup.")
     command = [
         _pg_dump_path(),
         "--format=plain",
@@ -52,15 +57,17 @@ def _database_dump(destination: Path) -> None:
         "--file",
         str(destination),
         "--host",
-        os.getenv("POSTGRES_HOST", "localhost"),
+        configured_url.host,
         "--port",
-        os.getenv("POSTGRES_PORT", "5432"),
+        str(configured_url.port or 5432),
         "--username",
-        os.getenv("POSTGRES_USER", "postgres"),
-        os.getenv("POSTGRES_DB", "dms_db"),
+        configured_url.username,
+        configured_url.database,
     ]
     child_environment = os.environ.copy()
-    child_environment["PGPASSWORD"] = password
+    child_environment.pop("PGPASSWORD", None)
+    if configured_url.password:
+        child_environment["PGPASSWORD"] = configured_url.password
     result = subprocess.run(
         command,
         env=child_environment,
@@ -72,6 +79,9 @@ def _database_dump(destination: Path) -> None:
     if result.returncode != 0:
         destination.unlink(missing_ok=True)
         raise BackupError("PostgreSQL database dump failed.")
+    if not destination.is_file() or destination.stat().st_size == 0:
+        destination.unlink(missing_ok=True)
+        raise BackupError("PostgreSQL database dump did not produce a usable file.")
 
 
 def _local_document_path(storage_path: str) -> Path:
@@ -124,12 +134,7 @@ def _backup_versions(staging_documents: Path, documents: list[Document]) -> tupl
 
 def create_backup(db: Session) -> tuple[Path, dict]:
     created_at = datetime.now(timezone.utc)
-    timestamp = created_at.strftime("%Y%m%d_%H%M%S")
-    backup_filename = f"dms_backup_{timestamp}.zip"
-    BACKUPS_ROOT.mkdir(parents=True, exist_ok=True)
-    final_path = BACKUPS_ROOT / backup_filename
-
-    with tempfile.TemporaryDirectory(prefix="dms_backup_", dir=BACKUPS_ROOT) as temporary_directory:
+    with tempfile.TemporaryDirectory(prefix="dms_backup_") as temporary_directory:
         staging_root = Path(temporary_directory)
         staging_documents = staging_root / "documents"
         staging_database = staging_root / "database" / "database_dump.sql"
@@ -139,7 +144,7 @@ def create_backup(db: Session) -> tuple[Path, dict]:
         manifest = {
             "backup_version": BACKUP_VERSION,
             "created_at": created_at.isoformat(),
-            "database": os.getenv("POSTGRES_DB", "dms_db"),
+            "database": make_url(str(database_url)).database,
             "document_count": document_count,
             "version_count": len(manifest_files),
             "files": manifest_files,
@@ -147,23 +152,37 @@ def create_backup(db: Session) -> tuple[Path, dict]:
         (staging_root / "manifest.json").write_text(
             json.dumps(manifest, indent=2), encoding="utf-8"
         )
-        temporary_archive = staging_root / backup_filename
+        temporary_archive = staging_root / "backup.zip"
         with zipfile.ZipFile(temporary_archive, "w", compression=zipfile.ZIP_DEFLATED) as archive:
             for path in sorted(staging_root.rglob("*")):
                 if path.is_file() and path != temporary_archive:
                     archive.write(path, path.relative_to(staging_root).as_posix())
-        temporary_archive.replace(final_path)
+        if not temporary_archive.is_file() or temporary_archive.stat().st_size == 0:
+            raise BackupError("Backup archive was not created successfully.")
+        try:
+            with zipfile.ZipFile(temporary_archive) as archive:
+                corrupt_member = archive.testzip()
+        except zipfile.BadZipFile as error:
+            raise BackupError("Backup archive is not a valid ZIP file.") from error
+        if corrupt_member is not None:
+            raise BackupError("Backup archive failed integrity verification.")
+
+        try:
+            stored = store_backup(temporary_archive, created_at, BACKUPS_ROOT)
+        except BackupStorageError as error:
+            raise BackupError(str(error)) from error
 
     logger.info(
-        "Backup succeeded filename=%s documents=%s versions=%s integrity_verified=true",
-        backup_filename,
+        "Backup succeeded filename=%s storage=%s documents=%s versions=%s integrity_verified=true",
+        stored.filename,
+        "supabase" if stored.storage_path.startswith("supabase://") else "local",
         document_count,
         len(manifest_files),
     )
-    return final_path, {
+    return stored.local_path or Path(stored.storage_path), {
         "status": "SUCCESS",
-        "backup_filename": backup_filename,
-        "backup_path": str(final_path),
+        "backup_filename": stored.filename,
+        "backup_path": stored.storage_path,
         "database_backup": True,
         "documents_backed_up": document_count,
         "versions_backed_up": len(manifest_files),

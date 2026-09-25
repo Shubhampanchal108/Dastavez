@@ -1,18 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  INITIAL_DOCUMENTS,
-  DmsDocument,
-  AuditLogRecord,
-  INITIAL_AUDIT_LOGS,
-  ShareRecord,
-  INITIAL_SHARES,
-  CustodyEvent,
-  INITIAL_CUSTODY_EVENTS,
-  OfficerPreset,
-  OFFICER_PRESETS,
-} from './mockData';
+import { DmsDocument, AuditLogRecord, CustodyEvent, OfficerPreset } from './types';
 import { DmsApi } from './api';
 
 export interface NewDocumentPayload {
@@ -34,22 +23,23 @@ export interface NewDocumentPayload {
 }
 
 // In-memory state persistent across route navigation
-let documentsState: DmsDocument[] = [...INITIAL_DOCUMENTS];
-let auditLogsState: AuditLogRecord[] = [...INITIAL_AUDIT_LOGS];
-let sharesState: ShareRecord[] = [...INITIAL_SHARES];
-let custodyState: CustodyEvent[] = [...INITIAL_CUSTODY_EVENTS];
-let currentOfficerState: OfficerPreset = OFFICER_PRESETS[0];
+let documentsState: DmsDocument[] = [];
+let auditLogsState: AuditLogRecord[] = [];
+let documentsLoading = true;
+let documentsError: string | null = null;
+let auditLogsLoading = true;
+let auditLogsError: string | null = null;
+let custodyState: CustodyEvent[] = [];
+let currentOfficerState: OfficerPreset = {
+  name: 'User',
+  role: 'Unavailable',
+  avatarInitials: 'U',
+};
 
 let listeners: Array<() => void> = [];
 
 function notifyListeners() {
-  listeners.forEach((listener) => {
-    try {
-      listener();
-    } catch (e) {
-      console.warn('Listener error', e);
-    }
-  });
+  listeners.forEach((listener) => listener());
 }
 
 export const DocumentStore = {
@@ -58,74 +48,7 @@ export const DocumentStore = {
   },
 
   getDocumentById(id: string): DmsDocument | undefined {
-    return documentsState.find((d) => d.id === id);
-  },
-
-  addDocument(payload: NewDocumentPayload): DmsDocument {
-    const docId = `doc-${Date.now().toString().slice(-4)}`;
-    const randomBlock = 4921900 + Math.floor(Math.random() * 100);
-    const randomTx = `0x${Array.from({ length: 64 }, () =>
-      Math.floor(Math.random() * 16).toString(16)
-    ).join('')}`;
-
-    const newDoc: DmsDocument = {
-      id: payload.id || docId,
-      case_id: payload.case_id,
-      original_filename: payload.original_filename,
-      document_type: payload.document_type || 'General Document',
-      department: payload.department || currentOfficerState.department,
-      sensitivity: payload.sensitivity || 'HIGH',
-      mime_type: payload.mime_type || 'application/pdf',
-      file_size: payload.file_size || 1540000,
-      sha256_hash: payload.sha256_hash,
-      status: 'VERIFIED',
-      created_at: new Date().toISOString(),
-      uploader: payload.uploader || currentOfficerState.name,
-      uploader_role: payload.uploader_role || currentOfficerState.role,
-      version: 'v1.0',
-      blockchain_tx: randomTx,
-      block_number: randomBlock,
-      summary: payload.description || 'Verified and cryptographically anchored in evidence ledger.',
-      ai_confidence: payload.ai_confidence || 0.982,
-      validation_status: payload.validation_status || 'COMPLETE',
-      ocr_text: payload.ocr_text || `AUTOMATED OCR EXTRACTION PREVIEW\nINGESTED FILE: ${payload.original_filename}\nSHA-256 CHECKSUM: ${payload.sha256_hash}\nDEPARTMENT: ${payload.department}`,
-    };
-
-    // Prepend to top of list
-    documentsState = [newDoc, ...documentsState];
-
-    // Add Audit Log
-    const newAudit: AuditLogRecord = {
-      id: `audit-${Date.now().toString().slice(-4)}`,
-      timestamp: new Date().toISOString(),
-      actor: `${newDoc.uploader} (${currentOfficerState.badgeId})`,
-      actor_role: currentOfficerState.role,
-      action: 'DOCUMENT_INGESTED',
-      action_category: 'UPLOAD',
-      reference: `${newDoc.case_id} / ${newDoc.id}`,
-      ip_address: '127.0.0.1 (Desktop)',
-      status: 'SUCCESS',
-      details: `Ingested ${newDoc.original_filename}. SHA-256: ${newDoc.sha256_hash.slice(0, 16)}... anchored to EVM Block #${newDoc.block_number}`,
-    };
-    auditLogsState = [newAudit, ...auditLogsState];
-
-    // Add Custody Event
-    const newCustody: CustodyEvent = {
-      id: `cust-${Date.now().toString().slice(-4)}`,
-      docId: newDoc.id,
-      timestamp: new Date().toLocaleString(),
-      action: 'Initial Ingestion & Seal',
-      fromOfficer: newDoc.uploader,
-      toOfficer: 'Institutional Vault',
-      badgeFrom: currentOfficerState.badgeId,
-      badgeTo: 'VAULT-01',
-      purpose: 'Initial evidentiary intake and cryptographic sealing.',
-      status: 'VERIFIED',
-    };
-    custodyState = [newCustody, ...custodyState];
-
-    notifyListeners();
-    return newDoc;
+    return documentsState.find((document) => document.id === id);
   },
 
   updateDocument(id: string, updates: Partial<DmsDocument>): DmsDocument | null {
@@ -164,74 +87,6 @@ export const DocumentStore = {
     auditLogsState = [newLog, ...auditLogsState];
     notifyListeners();
     return newLog;
-  },
-
-  getShares(): ShareRecord[] {
-    return [...sharesState];
-  },
-
-  createShare(payload: {
-    docId: string;
-    docName: string;
-    caseId: string;
-    recipientEmail: string;
-    recipientName: string;
-    permission: 'VIEW_ONLY' | 'DOWNLOAD' | 'AUDIT';
-    durationHours: number;
-  }): ShareRecord {
-    const expires = new Date(Date.now() + payload.durationHours * 3600 * 1000).toISOString();
-    const newShare: ShareRecord = {
-      id: `share-${Date.now().toString().slice(-4)}`,
-      document_id: payload.docId,
-      document_name: payload.docName,
-      case_id: payload.caseId,
-      recipient_email: payload.recipientEmail,
-      recipient_name: payload.recipientName,
-      permission: payload.permission,
-      created_at: new Date().toISOString(),
-      expires_at: expires,
-      status: 'ACTIVE',
-      shared_by: currentOfficerState.name,
-      access_count: 0,
-    };
-    sharesState = [newShare, ...sharesState];
-
-    this.addAuditLog({
-      actor: currentOfficerState.name,
-      actor_role: currentOfficerState.role,
-      action: 'SHARE_CREATED',
-      action_category: 'SHARE',
-      reference: newShare.id,
-      ip_address: '127.0.0.1 (Desktop)',
-      status: 'SUCCESS',
-      details: `Generated ${payload.permission} access link for ${payload.recipientEmail} expiring in ${payload.durationHours}h.`,
-    });
-
-    notifyListeners();
-    return newShare;
-  },
-
-  revokeShare(shareId: string): boolean {
-    const idx = sharesState.findIndex((s) => s.id === shareId);
-    if (idx !== -1) {
-      sharesState[idx].status = 'REVOKED';
-      sharesState = [...sharesState];
-
-      this.addAuditLog({
-        actor: currentOfficerState.name,
-        actor_role: currentOfficerState.role,
-        action: 'SHARE_REVOKED',
-        action_category: 'SHARE',
-        reference: shareId,
-        ip_address: '127.0.0.1 (Desktop)',
-        status: 'WARNING',
-        details: `Access link ${shareId} manually revoked by officer.`,
-      });
-
-      notifyListeners();
-      return true;
-    }
-    return false;
   },
 
   getCustodyEvents(docId?: string): CustodyEvent[] {
@@ -274,35 +129,44 @@ export const DocumentStore = {
   },
 
   async syncWithBackend() {
+    documentsLoading = true;
+    documentsError = null;
+    notifyListeners();
     try {
       const res = await DmsApi.listDocuments(20, 0);
-      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+      if (res.data && Array.isArray(res.data)) {
         const liveDocs = res.data.map((item: any) => ({
-          id: item.id || `doc-${Math.random()}`,
-          case_id: item.case_id || 'LIVE-CASE',
-          original_filename: item.original_filename || item.filename || 'Backend Document',
-          document_type: item.document_type || 'General',
-          department: item.department || 'Investigation',
-          sensitivity: item.sensitivity || 'HIGH',
-          mime_type: item.mime_type || 'application/pdf',
-          file_size: item.file_size || 1024000,
-          sha256_hash: item.sha256_hash || 'backend-hash',
-          status: (item.status || 'VERIFIED').toUpperCase(),
-          created_at: item.created_at || new Date().toISOString(),
-          uploader: item.uploader_name || 'System',
-          uploader_role: item.uploader_role || 'Investigator',
-          version: item.version || 'v1.0',
-          summary: item.summary || item.description,
+          id: item.id,
+          case_id: item.case_id,
+          original_filename: item.original_filename,
+          document_type: item.document_type || 'Unclassified',
+          department: item.department || 'Unassigned',
+          sensitivity: item.sensitivity || 'INTERNAL',
+          mime_type: item.mime_type || 'application/octet-stream',
+          file_size: item.file_size || 0,
+          sha256_hash: item.sha256_hash || '',
+          status: (item.status || 'PENDING').toUpperCase(),
+          created_at: item.created_at,
+          uploader: item.uploaded_by,
+          uploader_role: 'Unknown',
+          version: 'v1.0',
+          summary: item.description || '',
         }));
-
-        // Merge without losing any local mock items
-        const existingIds = new Set(liveDocs.map((d: any) => d.id));
-        const filteredMock = documentsState.filter((d) => !existingIds.has(d.id));
-        documentsState = [...liveDocs, ...filteredMock];
+        documentsState = liveDocs;
+        notifyListeners();
+      } else {
+        documentsState = [];
+        documentsError = 'Unable to load documents.';
         notifyListeners();
       }
     } catch (e) {
-      console.warn('Backend sync failed, using local fallback state', e);
+      console.warn('Backend sync failed', e);
+      documentsState = [];
+      documentsError = 'Unable to load documents.';
+      notifyListeners();
+    } finally {
+      documentsLoading = false;
+      notifyListeners();
     }
   },
 };
@@ -312,6 +176,7 @@ export function useDocuments() {
   const [docs, setDocs] = useState<DmsDocument[]>(() => DocumentStore.getDocuments());
 
   useEffect(() => {
+    void DocumentStore.syncWithBackend();
     const handleUpdate = () => setDocs(DocumentStore.getDocuments());
     listeners.push(handleUpdate);
     return () => {
@@ -322,10 +187,49 @@ export function useDocuments() {
   return docs;
 }
 
-export function useAuditLogs() {
-  const [logs, setLogs] = useState<AuditLogRecord[]>(() => DocumentStore.getAuditLogs());
+export function useDocumentsStatus() {
+  const [status, setStatus] = useState({ loading: documentsLoading, error: documentsError });
 
   useEffect(() => {
+    const handleUpdate = () => setStatus({ loading: documentsLoading, error: documentsError });
+    listeners.push(handleUpdate);
+    return () => {
+      listeners = listeners.filter((listener) => listener !== handleUpdate);
+    };
+  }, []);
+
+  return status;
+}
+
+export function useAuditLogs() {
+  const [logs, setLogs] = useState<AuditLogRecord[]>([]);
+
+  useEffect(() => {
+    auditLogsLoading = true;
+    auditLogsError = null;
+    void DmsApi.listAuditLogs(0, 100).then((res) => {
+      if (Array.isArray(res.data)) {
+        auditLogsState = res.data.map((item: any) => ({
+          id: item.id,
+          timestamp: item.timestamp,
+          actor: item.user_id || 'System',
+          actor_role: 'Backend',
+          action: item.action,
+          action_category: 'ADMIN',
+          reference: item.resource_id || item.resource_type || '',
+          ip_address: '',
+          status: item.result === 'SUCCESS' ? 'SUCCESS' : 'WARNING',
+          details: item.details || '',
+        }));
+        notifyListeners();
+      } else {
+        auditLogsState = [];
+        auditLogsError = res.error || 'Unable to load audit activity.';
+        notifyListeners();
+      }
+      auditLogsLoading = false;
+      notifyListeners();
+    });
     const handleUpdate = () => setLogs(DocumentStore.getAuditLogs());
     listeners.push(handleUpdate);
     return () => {
@@ -336,24 +240,36 @@ export function useAuditLogs() {
   return logs;
 }
 
-export function useShares() {
-  const [shares, setShares] = useState<ShareRecord[]>(() => DocumentStore.getShares());
+export function useAuditLogsStatus() {
+  const [status, setStatus] = useState({ loading: auditLogsLoading, error: auditLogsError });
 
   useEffect(() => {
-    const handleUpdate = () => setShares(DocumentStore.getShares());
+    const handleUpdate = () => setStatus({ loading: auditLogsLoading, error: auditLogsError });
     listeners.push(handleUpdate);
     return () => {
-      listeners = listeners.filter((l) => l !== handleUpdate);
+      listeners = listeners.filter((listener) => listener !== handleUpdate);
     };
   }, []);
 
-  return shares;
+  return status;
 }
 
 export function useCurrentOfficer() {
   const [officer, setOfficer] = useState<OfficerPreset>(() => DocumentStore.getCurrentOfficer());
 
   useEffect(() => {
+    void DmsApi.getMe().then((response) => {
+      if (response.data?.username && response.data?.role) {
+        const username = String(response.data.username);
+        DocumentStore.setCurrentOfficer({
+          name: username,
+          role: String(response.data.role),
+          avatarInitials: username.slice(0, 2).toUpperCase(),
+        });
+      } else {
+        DocumentStore.setCurrentOfficer({ name: 'User', role: 'Unavailable', avatarInitials: 'U' });
+      }
+    });
     const handleUpdate = () => setOfficer(DocumentStore.getCurrentOfficer());
     listeners.push(handleUpdate);
     return () => {

@@ -13,33 +13,66 @@ from app.models.document_version import DocumentVersion
 
 
 ARTIFACT_PATH = Path(__file__).resolve().parents[2] / "blockchain" / "artifact.json"
-NETWORK = "local-ganache"
 logger = logging.getLogger(__name__)
 
 
+def blockchain_network() -> str:
+    return os.getenv("BLOCKCHAIN_NETWORK", "local-ganache").strip() or "local-ganache"
+
+
+def blockchain_provider() -> str:
+    provider = os.getenv("BLOCKCHAIN_PROVIDER", "ganache").strip().lower()
+    if provider not in {"ganache", "external"}:
+        raise HTTPException(status_code=503, detail="Blockchain provider configuration is invalid.")
+    return provider
+
+
+def configured_chain_id() -> int:
+    value = os.getenv("BLOCKCHAIN_CHAIN_ID", "").strip()
+    if not value:
+        raise HTTPException(status_code=503, detail="Blockchain chain ID is not configured.")
+    try:
+        chain_id = int(value)
+    except ValueError as error:
+        raise HTTPException(status_code=503, detail="Blockchain chain ID configuration is invalid.") from error
+    if chain_id <= 0:
+        raise HTTPException(status_code=503, detail="Blockchain chain ID configuration is invalid.")
+    return chain_id
+
+
 def _web3() -> tuple[Web3, object, str]:
-    rpc_url = os.getenv("BLOCKCHAIN_RPC_URL", "http://127.0.0.1:8545")
+    provider = blockchain_provider()
+    rpc_url = os.getenv("BLOCKCHAIN_RPC_URL", "").strip()
     private_key = os.getenv("BLOCKCHAIN_PRIVATE_KEY", "")
     address = os.getenv("BLOCKCHAIN_CONTRACT_ADDRESS", "")
-    if not private_key or not address:
-        raise HTTPException(status_code=503, detail="Local blockchain is not configured. Set BLOCKCHAIN_PRIVATE_KEY and BLOCKCHAIN_CONTRACT_ADDRESS.")
+    if not rpc_url or not private_key or not address:
+        raise HTTPException(status_code=503, detail="Blockchain configuration is incomplete.")
     if not ARTIFACT_PATH.exists():
-        raise HTTPException(status_code=503, detail="Blockchain contract artifact is missing. Deploy the local contract first.")
+        raise HTTPException(status_code=503, detail="Blockchain contract artifact is missing.")
     artifact = json.loads(ARTIFACT_PATH.read_text(encoding="utf-8"))
     web3 = Web3(Web3.HTTPProvider(rpc_url))
     if not web3.is_connected():
-        raise HTTPException(status_code=503, detail="Local blockchain is unavailable. Start Ganache and try again.")
-    configured_address = Web3.to_checksum_address(address)
+        raise HTTPException(status_code=503, detail="Configured blockchain RPC is unavailable.")
+    expected_chain_id = configured_chain_id()
+    if web3.eth.chain_id != expected_chain_id:
+        raise HTTPException(status_code=503, detail="Configured blockchain chain ID does not match the active network.")
+    try:
+        configured_address = Web3.to_checksum_address(address)
+    except ValueError as error:
+        raise HTTPException(status_code=503, detail="Configured blockchain contract address is invalid.") from error
     artifact_address = artifact.get("address")
-    if artifact_address and Web3.to_checksum_address(artifact_address) != configured_address:
+    if provider == "ganache" and artifact_address and Web3.to_checksum_address(artifact_address) != configured_address:
         raise HTTPException(status_code=503, detail="Configured contract address does not match the deployed artifact.")
     if not any(item.get("name") == "getProof" for item in artifact["abi"]):
         raise HTTPException(status_code=503, detail="Blockchain contract ABI does not contain the proof retrieval function.")
     if not web3.eth.get_code(configured_address):
         raise HTTPException(status_code=503, detail="Configured blockchain contract is not deployed on the active RPC network.")
-    account = web3.eth.account.from_key(private_key)
+    try:
+        account = web3.eth.account.from_key(private_key)
+    except (TypeError, ValueError) as error:
+        raise HTTPException(status_code=503, detail="Configured blockchain private key is invalid.") from error
     contract = web3.eth.contract(address=configured_address, abi=artifact["abi"])
-    logger.info("Connected to blockchain RPC=%s contract=%s chain_id=%s", rpc_url, configured_address, web3.eth.chain_id)
+    logger.info("Connected to blockchain provider=%s network=%s contract=%s chain_id=%s", provider, blockchain_network(), configured_address, web3.eth.chain_id)
     return web3, account, contract
 
 
@@ -74,7 +107,7 @@ def create_proof(db, document: Document, version: DocumentVersion | None = None)
         tx_hash = web3.eth.send_raw_transaction(signed.raw_transaction)
         receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
     except Exception as error:
-        raise HTTPException(status_code=502, detail="Local blockchain proof registration failed.") from error
+        raise HTTPException(status_code=502, detail="Blockchain proof registration failed.") from error
     record = BlockchainRecord(
         document_id=document.id,
         version_id=version.id,
@@ -82,7 +115,7 @@ def create_proof(db, document: Document, version: DocumentVersion | None = None)
         sha256_hash=version.sha256_hash,
         proof_hash=Web3.to_hex(proof_hash),
         transaction_id=tx_hash.hex(),
-        network=NETWORK,
+        network=blockchain_network(),
         verification_status="ANCHORED",
         timestamp=datetime.now(timezone.utc),
     )
@@ -121,7 +154,7 @@ def verify_proof(db, document: Document, version: DocumentVersion | None = None,
     try:
         stored = contract.functions.getProof(expected).call()
     except Exception as error:
-        raise HTTPException(status_code=502, detail="Local blockchain proof retrieval failed.") from error
+        raise HTTPException(status_code=502, detail="Blockchain proof retrieval failed.") from error
     blockchain_proof = Web3.to_hex(stored)
     logger.info(
         "Blockchain proof retrieved document=%s version=%s has_value=%s",
@@ -139,5 +172,5 @@ def verify_proof(db, document: Document, version: DocumentVersion | None = None,
         "current_sha256": current_sha256,
         "blockchain_proof": blockchain_proof,
         "transaction_hash": record.transaction_id,
-        "network": record.network or NETWORK,
+        "network": record.network or blockchain_network(),
     }

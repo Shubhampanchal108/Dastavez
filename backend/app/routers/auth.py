@@ -1,5 +1,6 @@
 import os
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.exc import IntegrityError
@@ -9,6 +10,7 @@ from app.database import get_db
 from app.dependencies.auth import get_current_user, require_roles
 from app.models.authenticator_challenge import AuthenticatorChallenge
 from app.models.authenticator_device import AuthenticatorDevice
+from app.models.otp_challenge import OTPChallenge
 from app.models.user import User
 from app.schemas.auth import (
     AuthUserResponse,
@@ -21,6 +23,7 @@ from app.schemas.auth import (
     AuthenticatorRequiredResponse,
     LoginChallengeResponse,
     LoginRequest,
+    MobileOtpRevealRequest,
     OTPRequiredResponse,
     OTPTokenResponse,
     OTPVerifyRequest,
@@ -29,6 +32,7 @@ from app.schemas.auth import (
 )
 from app.services.audit_service import record_audit_event
 from app.services.auth_service import access_token_expiration_seconds, authenticate_user, create_access_token, create_login_otp_challenge, hash_password, normalize_role, verify_login_otp
+from app.services.otp_delivery import development_otp_enabled, otp_delivery
 from app.services.authenticator_service import (
     approve_authenticator_challenge,
     build_authenticator_challenge_payload,
@@ -105,7 +109,41 @@ def login_user(request: LoginRequest, db: Session = Depends(get_db)):
         status="OTP_REQUIRED",
         challenge_id=challenge.id,
         message="OTP verification required.",
-        dev_otp=getattr(challenge, "_dev_otp", None),
+        dev_otp=getattr(challenge, "_dev_otp", None) if development_otp_enabled() else None,
+        expires_at=challenge.expires_at,
+    )
+
+
+@router.post("/mobile/reveal-otp", response_model=OTPRequiredResponse)
+def reveal_mobile_otp(request: MobileOtpRevealRequest, db: Session = Depends(get_db)):
+    """Development-only bridge: reveal the OTP belonging to the current web login."""
+    if not development_otp_enabled():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found.")
+    user = authenticate_user(db, request.email, request.password)
+    now = __import__("datetime").datetime.now(__import__("datetime").timezone.utc)
+    challenge = (
+        db.query(OTPChallenge)
+        .filter(
+            OTPChallenge.user_id == user.id,
+            OTPChallenge.purpose == "LOGIN",
+            OTPChallenge.status == "PENDING",
+            OTPChallenge.expires_at > now,
+        )
+        .order_by(OTPChallenge.created_at.desc())
+        .first()
+    )
+    if challenge is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Start login on the web app first.")
+
+    otp = otp_delivery.get(challenge.id)
+    if otp is None:
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="OTP is no longer available. Start web login again.")
+
+    return OTPRequiredResponse(
+        status="OTP_REQUIRED",
+        challenge_id=challenge.id,
+        message="OTP unlocked after mobile biometric approval.",
+        dev_otp=otp,
         expires_at=challenge.expires_at,
     )
 
@@ -113,11 +151,21 @@ def login_user(request: LoginRequest, db: Session = Depends(get_db)):
 @router.get("/authenticator-challenge/{challenge_id}", response_model=AuthenticatorChallengeStatusResponse)
 def get_authenticator_challenge_status(
     challenge_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     challenge = db.get(AuthenticatorChallenge, challenge_id)
     if challenge is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Challenge not found.")
+    if challenge.user_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You cannot view this challenge.")
+    now = datetime.now(timezone.utc)
+    expires_at = challenge.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if challenge.status == "PENDING" and expires_at <= now:
+        challenge.status = "EXPIRED"
+        db.commit()
     return AuthenticatorChallengeStatusResponse(
         challenge_id=challenge.id,
         status=challenge.status,
@@ -136,6 +184,47 @@ def list_pending_authenticator_challenges(
             AuthenticatorChallenge.user_id == current_user.id,
             AuthenticatorChallenge.status == "PENDING",
             AuthenticatorChallenge.expires_at > __import__("datetime").datetime.now(__import__("datetime").timezone.utc),
+        )
+        .order_by(AuthenticatorChallenge.created_at.desc())
+        .all()
+    )
+    return [
+        PendingAuthenticatorChallengeResponse(
+            challenge_id=challenge.id,
+            created_at=challenge.created_at,
+            expires_at=challenge.expires_at,
+            purpose="AUTHENTICATOR_LOGIN",
+        )
+        for challenge in challenges
+    ]
+
+
+@router.get("/authenticator-challenges/device/{device_id}", response_model=list[PendingAuthenticatorChallengeResponse])
+def list_pending_authenticator_challenges_for_device(
+    device_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    device = (
+        db.query(AuthenticatorDevice)
+        .filter(
+            AuthenticatorDevice.device_identifier == device_id,
+            AuthenticatorDevice.user_id == current_user.id,
+            AuthenticatorDevice.is_active.is_(True),
+            AuthenticatorDevice.revoked_at.is_(None),
+        )
+        .first()
+    )
+    if device is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Authenticator device not found.")
+
+    now = __import__("datetime").datetime.now(__import__("datetime").timezone.utc)
+    challenges = (
+        db.query(AuthenticatorChallenge)
+        .filter(
+            AuthenticatorChallenge.authenticator_device_id == device.id,
+            AuthenticatorChallenge.status == "PENDING",
+            AuthenticatorChallenge.expires_at > now,
         )
         .order_by(AuthenticatorChallenge.created_at.desc())
         .all()

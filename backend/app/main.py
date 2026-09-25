@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
@@ -12,15 +14,28 @@ from app.routers.blockchain import router as blockchain_router
 from app.routers.backups import router as backups_router
 from app.routers.auth import router as auth_router
 from app.routers.audit_logs import router as audit_logs_router
+from app.routers.users import router as users_router
 
 app = FastAPI(
     title="Secure Intelligent Document Management System API",
     version="0.1.0",
 )
 
+configured_origins = [
+    origin.strip()
+    for origin in os.getenv("CORS_ORIGINS", "").split(",")
+    if origin.strip()
+]
+cors_origins = configured_origins or [
+    "http://localhost:3000",
+    "http://localhost:5173",
+]
+if "*" in cors_origins:
+    raise RuntimeError("CORS_ORIGINS must not contain '*' when credentials are enabled.")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,6 +49,7 @@ app.include_router(blockchain_router)
 app.include_router(backups_router)
 app.include_router(auth_router)
 app.include_router(audit_logs_router)
+app.include_router(users_router)
 
 
 @app.get("/health")

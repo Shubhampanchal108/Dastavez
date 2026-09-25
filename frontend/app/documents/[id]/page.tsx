@@ -26,12 +26,12 @@ import {
 import { StatusBadge } from '@/components/status-badge';
 import { DocumentStore, useDocuments } from '@/lib/store';
 import { DmsApi } from '@/lib/api';
-import { DmsDocument } from '@/lib/mockData';
+import { DmsDocument } from '@/lib/types';
 
 export default function DocumentDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const docId = (params?.id as string) || 'doc-101';
+  const docId = params?.id as string;
   const allDocs = useDocuments();
 
   const [doc, setDoc] = useState<DmsDocument | null>(null);
@@ -65,44 +65,10 @@ export default function DocumentDetailPage() {
         setAiData(res.data);
         setAiSuccessMsg(`Classification complete! Confidence: ${res.data.accuracy_percentage || '99.1%'}. Saved to PostgreSQL.`);
       } else {
-        // Fallback simulation
-        setTimeout(() => {
-          setAiData({
-            model: 'qwen/qwen3.8-27b',
-            provider: 'Groq Cloud & PostgreSQL',
-            confidence: 0.994,
-            accuracy_percentage: 99.4,
-            document_type: doc.document_type,
-            entities: [
-              { label: 'Case Reference', val: doc.case_id },
-              { label: 'Primary Jurisdiction', val: doc.department },
-              { label: 'Filing Officer', val: doc.uploader },
-              { label: 'Integrity Seal', val: 'Cryptographically Sound' },
-            ],
-          });
-          setAiSuccessMsg('PostgreSQL AI pipeline completed with 99.4% confidence score.');
-          setIsAiLoading(false);
-        }, 800);
-        return;
+        setAiSuccessMsg('AI classification could not be loaded.');
       }
     } catch {
-      setTimeout(() => {
-        setAiData({
-          model: 'qwen/qwen3.8-27b',
-          provider: 'Groq Cloud & PostgreSQL',
-          confidence: 0.992,
-          accuracy_percentage: 99.2,
-          document_type: doc.document_type,
-          entities: [
-            { label: 'Case Reference', val: doc.case_id },
-            { label: 'Jurisdiction', val: doc.department },
-            { label: 'Filing Officer', val: doc.uploader },
-          ],
-        });
-        setAiSuccessMsg('Classification synced with PostgreSQL repository.');
-        setIsAiLoading(false);
-      }, 800);
-      return;
+      setAiSuccessMsg('AI classification could not be loaded.');
     }
     setIsAiLoading(false);
   };
@@ -221,7 +187,7 @@ export default function DocumentDetailPage() {
                     ? `${aiData.accuracy_percentage}%`
                     : doc.ai_confidence
                     ? `${(doc.ai_confidence * 100).toFixed(1)}%`
-                    : '98.5%'}
+                    : 'Unavailable'}
                 </span>
               </div>
               <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
@@ -281,7 +247,7 @@ export default function DocumentDetailPage() {
               >
                 <Blocks className="w-5 h-5 text-indigo-600 mb-2 group-hover:scale-110 transition-transform" />
                 <span className="block text-xs font-bold text-slate-900">Blockchain Proof</span>
-                <span className="text-[10px] text-slate-500">Block #{doc.block_number || '4921842'}</span>
+                <span className="text-[10px] text-slate-500">{doc.block_number ? `Block #${doc.block_number}` : 'No blockchain proof'}</span>
               </Link>
               <Link
                 href={`/custody?id=${doc.id}`}

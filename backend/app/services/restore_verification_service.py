@@ -13,7 +13,9 @@ from pathlib import Path
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from sqlalchemy.engine import make_url
 
+from app.database import database_url
 from app.services.storage import sanitize_filename
 
 
@@ -52,13 +54,16 @@ def _postgres_tool(name: str) -> str:
 
 
 def _connection_args(database: str) -> list[str]:
+    configured_url = make_url(str(database_url))
+    if not configured_url.host or not configured_url.username:
+        raise RestoreVerificationError("DATABASE_URL is incomplete for restore verification.")
     return [
         "--host",
-        os.getenv("POSTGRES_HOST", "localhost"),
+        configured_url.host,
         "--port",
-        os.getenv("POSTGRES_PORT", "5432"),
+        str(configured_url.port or 5432),
         "--username",
-        os.getenv("POSTGRES_USER", "postgres"),
+        configured_url.username,
         "--dbname",
         database,
     ]
@@ -66,7 +71,10 @@ def _connection_args(database: str) -> list[str]:
 
 def _run_postgres(command: list[str], timeout: int = 300) -> subprocess.CompletedProcess:
     child_environment = os.environ.copy()
-    child_environment["PGPASSWORD"] = os.getenv("POSTGRES_PASSWORD", "")
+    child_environment.pop("PGPASSWORD", None)
+    configured_url = make_url(str(database_url))
+    if configured_url.password:
+        child_environment["PGPASSWORD"] = configured_url.password
     return subprocess.run(
         command,
         env=child_environment,
@@ -164,7 +172,11 @@ def _create_database(database_name: str) -> None:
 
 def _drop_database(database_name: str) -> None:
     quoted_name = '"' + database_name.replace('"', '""') + '"'
-    result = _run_postgres([_postgres_tool("psql"), *_connection_args("postgres"), "--command", f"DROP DATABASE IF EXISTS {quoted_name}"])
+    try:
+        result = _run_postgres([_postgres_tool("psql"), *_connection_args("postgres"), "--command", f"DROP DATABASE IF EXISTS {quoted_name}"])
+    except RestoreVerificationError:
+        logger.error("Temporary restore database cleanup could not run database=%s", database_name)
+        return
     if result.returncode != 0:
         logger.error("Temporary restore database cleanup failed database=%s", database_name)
 
@@ -221,7 +233,10 @@ def _extract_documents(archive: zipfile.ZipFile, manifest: dict, destination: Pa
 
 def verify_backup_restore(db: Session, backup_path: Path) -> dict:
     source_counts = _source_counts(db)
+    source_database = make_url(str(database_url)).database
     temporary_database = f"dms_restore_test_{uuid.uuid4().hex[:12]}"
+    if temporary_database == source_database:
+        raise RestoreVerificationError("Generated restore target is not isolated from the source database.")
     database_restored = False
     database_name = temporary_database
     try:

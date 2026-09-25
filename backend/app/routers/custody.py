@@ -10,6 +10,7 @@ from app.models.document import Document
 from app.models.user import User
 from app.schemas.custody import CustodyEventResponse, CustodyReceiveRequest, CustodyTransferCreate
 from app.services.chain_of_custody_service import create_transfer, list_custody, receive_transfer
+from app.services.resource_authorization import require_document_access
 
 
 router = APIRouter(tags=["chain-of-custody"])
@@ -20,13 +21,16 @@ def transfer_document_custody(document_id: uuid.UUID, request: CustodyTransferCr
     document = db.get(Document, document_id)
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found.")
+    require_document_access(db, document, current_user)
     return create_transfer(db, document, request, current_user)
 
 
 @router.get("/api/documents/{document_id}/custody", response_model=list[CustodyEventResponse])
-def get_document_custody(document_id: uuid.UUID, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
-    if db.get(Document, document_id) is None:
+def get_document_custody(document_id: uuid.UUID, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    document = db.get(Document, document_id)
+    if document is None:
         raise HTTPException(status_code=404, detail="Document not found.")
+    require_document_access(db, document, current_user)
     return list_custody(db, document_id)
 
 

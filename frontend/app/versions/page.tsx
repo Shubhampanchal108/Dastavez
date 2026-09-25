@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   History,
@@ -13,34 +13,32 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { useDocuments } from '@/lib/store';
-import { DOCUMENT_VERSIONS_MAP } from '@/lib/mockData';
+import { DmsApi } from '@/lib/api';
 
 function VersionsContent() {
   const searchParams = useSearchParams();
   const initialId = searchParams.get('id');
   const documents = useDocuments();
 
-  const [selectedDocId, setSelectedDocId] = useState<string>(initialId || documents[0]?.id || 'doc-101');
+  const [selectedDocId, setSelectedDocId] = useState<string>(initialId || '');
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [versions, setVersions] = useState<any[]>([]);
 
-  const activeDoc = documents.find((d) => d.id === selectedDocId) || documents[0];
-  const versions = DOCUMENT_VERSIONS_MAP[activeDoc?.id] || [
-    {
-      version: activeDoc.version || 'v1.0',
-      timestamp: new Date(activeDoc.created_at).toLocaleString(),
-      actor: activeDoc.uploader,
-      role: activeDoc.uploader_role,
-      summary: activeDoc.summary || 'Initial registered upload.',
-      sha256: activeDoc.sha256_hash,
-      size: `${(activeDoc.file_size / 1024 / 1024).toFixed(2)} MB`,
-      isCurrent: true,
-    },
-  ];
+  const activeDoc = documents.find((d) => d.id === selectedDocId);
+
+  useEffect(() => {
+    if (!activeDoc) return;
+    void DmsApi.getVersions(activeDoc.id).then((response) => {
+      setVersions(Array.isArray(response.data) ? response.data : []);
+    });
+  }, [activeDoc]);
 
   const handleRollback = (ver: string) => {
     setSuccessMsg(`Document successfully restored to state ${ver}. Audit event recorded.`);
     setTimeout(() => setSuccessMsg(null), 3500);
   };
+
+  if (!activeDoc) return <div className="p-8 text-center text-slate-500">No documents found.</div>;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -83,6 +81,7 @@ function VersionsContent() {
         <h2 className="text-sm font-bold text-slate-900">Revision Ledger for {activeDoc.original_filename}</h2>
 
         <div className="space-y-4">
+          {versions.length === 0 && <p className="text-xs text-slate-500">No version records found.</p>}
           {versions.map((v) => (
             <div
               key={v.version}

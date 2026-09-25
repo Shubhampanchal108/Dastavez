@@ -4,7 +4,14 @@
  * dynamic baseURL configuration, and resilient fallback handling.
  */
 
-let currentBaseUrl = 'http://127.0.0.1:8000';
+const configuredBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || (
+  process.env.NODE_ENV === 'development'
+    ? 'http://localhost:8000'
+    : (() => {
+        throw new Error('NEXT_PUBLIC_API_BASE_URL must be configured in production.');
+      })()
+);
+let currentBaseUrl = configuredBaseUrl;
 let currentAccessToken: string | null = null;
 let currentChallengeId: string | null = null;
 let currentUserProfile: any = null;
@@ -12,7 +19,7 @@ let currentUserProfile: any = null;
 // Initialize from storage if in browser
 if (typeof window !== 'undefined') {
   currentAccessToken = localStorage.getItem('dms_token');
-  currentBaseUrl = localStorage.getItem('dms_api_url') || 'http://127.0.0.1:8000';
+  currentBaseUrl = localStorage.getItem('dms_api_url') || configuredBaseUrl;
 }
 
 export const ApiConfig = {
@@ -43,7 +50,38 @@ export const ApiConfig = {
       else localStorage.removeItem('dms_user');
     }
   },
+  clearSession: () => {
+    currentAccessToken = null;
+    currentUserProfile = null;
+    currentChallengeId = null;
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('dms_token');
+      localStorage.removeItem('dms_user');
+    }
+  },
 };
+
+function isPublicApiEndpoint(endpoint: string) {
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  return [
+    '/health',
+    '/health/db',
+    '/api/auth/login',
+    '/api/auth/verify-otp',
+    '/api/auth/mobile/reveal-otp',
+  ].includes(cleanEndpoint);
+}
+
+function clearSessionAndRedirectToLogin(endpoint: string) {
+  ApiConfig.clearSession();
+  if (
+    typeof window !== 'undefined' &&
+    !isPublicApiEndpoint(endpoint) &&
+    window.location.pathname !== '/login'
+  ) {
+    window.location.replace('/login');
+  }
+}
 
 /**
  * Core fetch wrapper with timeout, JSON parsing and auth headers
@@ -88,6 +126,9 @@ export async function apiRequest<T = any>(
     }
 
     if (!response.ok) {
+      if (response.status === 401) {
+        clearSessionAndRedirectToLogin(endpoint);
+      }
       const errorMsg =
         (data && (data.detail || data.message)) ||
         `Request failed with HTTP status ${response.status}`;
@@ -141,6 +182,21 @@ export const DmsApi = {
     return res;
   },
 
+  async getAuthenticatorChallengeStatus(challengeId: string) {
+    return apiRequest(`/api/auth/authenticator-challenge/${challengeId}`);
+  },
+
+  async completeAuthenticator(challengeId: string) {
+    const res = await apiRequest('/api/auth/login/complete', {
+      method: 'POST',
+      body: JSON.stringify({ challenge_id: challengeId }),
+    });
+    if (res.data && res.data.access_token) {
+      ApiConfig.setToken(res.data.access_token);
+    }
+    return res;
+  },
+
   async getMe() {
     const res = await apiRequest('/api/auth/me');
     if (res.data) {
@@ -154,6 +210,10 @@ export const DmsApi = {
     return apiRequest(`/api/documents?limit=${limit}&offset=${offset}`);
   },
 
+  async listAuditLogs(skip: number = 0, limit: number = 100) {
+    return apiRequest(`/api/audit-logs?skip=${skip}&limit=${limit}`);
+  },
+
   async searchDocuments(params: {
     q?: string;
     case_id?: string;
@@ -161,6 +221,7 @@ export const DmsApi = {
     department?: string;
     status?: string;
     limit?: number;
+    offset?: number;
   }) {
     const query = new URLSearchParams();
     if (params.q) query.append('q', params.q);
@@ -169,6 +230,7 @@ export const DmsApi = {
     if (params.department) query.append('department', params.department);
     if (params.status) query.append('status', params.status);
     if (params.limit) query.append('limit', String(params.limit));
+    if (params.offset) query.append('offset', String(params.offset));
 
     return apiRequest(`/api/documents/search?${query.toString()}`);
   },
@@ -226,10 +288,26 @@ export const DmsApi = {
     return apiRequest(`/api/shares/${shareId}`);
   },
 
+  async listReceivedShares() {
+    return apiRequest('/api/shares/received');
+  },
+
   async revokeShare(shareId: string) {
     return apiRequest(`/api/shares/${shareId}/revoke`, {
       method: 'POST',
     });
+  },
+
+  async accessShare(shareId: string, accessingUserId: string) {
+    return apiRequest(`/api/shares/${shareId}/access`, {
+      method: 'POST',
+      body: JSON.stringify({ accessing_user_id: accessingUserId }),
+    });
+  },
+
+  async listUserDirectory(query?: string) {
+    const params = query ? `?q=${encodeURIComponent(query)}` : '';
+    return apiRequest(`/api/users/directory${params}`);
   },
 
   // Custody
@@ -253,11 +331,6 @@ export const DmsApi = {
     return apiRequest(`/api/documents/${documentId}/blockchain-proof`, {
       method: 'POST',
     });
-  },
-
-  // Audit Logs
-  async listAuditLogs(skip: number = 0, limit: number = 50) {
-    return apiRequest(`/api/audit-logs?skip=${skip}&limit=${limit}`);
   },
 
   // Backups

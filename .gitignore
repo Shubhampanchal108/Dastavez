@@ -6,6 +6,9 @@ backend/restore-tests/
 frontend/node_modules/
 frontend/dist/
 .env
+*.env
+.env.*
+!.env.example
 upload-too-large.pdf
 __pycache__/
 *.py[cod]

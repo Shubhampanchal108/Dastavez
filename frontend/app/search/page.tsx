@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Search, Filter, FileText, ChevronRight } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useDocuments } from '@/lib/store';
 import { DocumentTable } from '@/components/document-table';
+import { DmsApi } from '@/lib/api';
+import { DmsDocument } from '@/lib/types';
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -12,33 +14,90 @@ function SearchContent() {
   const documents = useDocuments();
 
   const [query, setQuery] = useState(initialQ);
+  const [debouncedQuery, setDebouncedQuery] = useState(initialQ);
   const [department, setDepartment] = useState('ALL');
   const [docType, setDocType] = useState('ALL');
-  const [sensitivity, setSensitivity] = useState('ALL');
+  const [searchResults, setSearchResults] = useState<DmsDocument[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialQ) setQuery(initialQ);
   }, [initialQ]);
 
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 400);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [query]);
+
   const departments = Array.from(new Set(documents.map((d) => d.department)));
   const docTypes = Array.from(new Set(documents.map((d) => d.document_type)));
 
-  const filtered = documents.filter((doc) => {
-    const qLower = query.toLowerCase();
-    const matchesQ =
-      !query ||
-      doc.original_filename.toLowerCase().includes(qLower) ||
-      doc.case_id.toLowerCase().includes(qLower) ||
-      doc.sha256_hash.toLowerCase().includes(qLower) ||
-      (doc.ocr_text && doc.ocr_text.toLowerCase().includes(qLower)) ||
-      (doc.summary && doc.summary.toLowerCase().includes(qLower));
+  const hasSearch = Boolean(query.trim() || department !== 'ALL' || docType !== 'ALL');
 
-    const matchesDept = department === 'ALL' || doc.department === department;
-    const matchesType = docType === 'ALL' || doc.document_type === docType;
-    const matchesSens = sensitivity === 'ALL' || doc.sensitivity === sensitivity;
+  useEffect(() => {
+    if (!hasSearch) {
+      setSearchResults([]);
+      setSearchError(null);
+      setIsSearching(false);
+      return;
+    }
 
-    return matchesQ && matchesDept && matchesType && matchesSens;
-  });
+    let active = true;
+    setIsSearching(true);
+    setSearchError(null);
+    setSearchResults([]);
+
+    void DmsApi.searchDocuments({
+      q: debouncedQuery.trim() || undefined,
+      department: department !== 'ALL' ? department : undefined,
+      document_type: docType !== 'ALL' ? docType : undefined,
+      limit: 100,
+      offset: 0,
+    }).then((response) => {
+      if (!active) return;
+      if (Array.isArray(response.data)) {
+        setSearchResults(response.data.map((item: any) => ({
+          id: item.id,
+          case_id: item.case_id,
+          original_filename: item.original_filename,
+          document_type: item.document_type || 'Unclassified',
+          department: item.department || 'Unassigned',
+          sensitivity: item.sensitivity || 'INTERNAL',
+          mime_type: item.mime_type || 'application/octet-stream',
+          file_size: item.file_size || 0,
+          sha256_hash: item.sha256_hash || '',
+          status: (item.status || 'PENDING').toUpperCase(),
+          created_at: item.created_at,
+          uploader: item.uploaded_by || '',
+          uploader_role: 'Unknown',
+          version: 'v1.0',
+          summary: item.description || '',
+        })));
+      } else {
+        setSearchResults([]);
+        setSearchError(response.error || 'Search failed.');
+      }
+      setIsSearching(false);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [department, docType, debouncedQuery, hasSearch]);
+
+  useEffect(() => {
+    if (query !== debouncedQuery && hasSearch) {
+      setIsSearching(true);
+      setSearchError(null);
+      setSearchResults([]);
+    }
+  }, [debouncedQuery, hasSearch, query]);
+
+  const results = hasSearch ? searchResults : documents;
 
   return (
     <div className="space-y-6">
@@ -99,29 +158,21 @@ function SearchContent() {
             </select>
           </div>
 
-          <div>
-            <label className="block text-[11px] font-semibold text-slate-600 mb-1">Clearance Level</label>
-            <select
-              value={sensitivity}
-              onChange={(e) => setSensitivity(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800"
-            >
-              <option value="ALL">All Sensitivity Levels</option>
-              <option value="INTERNAL">Internal</option>
-              <option value="RESTRICTED">Restricted</option>
-              <option value="HIGH">High Sensitivity</option>
-              <option value="TOP_SECRET">Top Secret</option>
-            </select>
-          </div>
         </div>
       </div>
 
       {/* Results */}
       <div className="space-y-3">
         <div className="flex items-center justify-between text-xs text-slate-500">
-          <span>Found <strong className="text-slate-800">{filtered.length}</strong> matching documents</span>
+          <span>
+            {isSearching ? 'Searching...' : `Found ${results.length} matching documents`}
+          </span>
         </div>
-        <DocumentTable documents={filtered} />
+        {searchError ? (
+          <p className="p-8 text-center text-xs text-rose-700">{searchError}</p>
+        ) : (
+          <DocumentTable documents={results} />
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -10,15 +11,31 @@ from app.models.user import User
 from app.routers.documents import get_temporary_user
 from app.schemas.sharing import ShareAccessRequest, ShareAccessResponse, ShareMetadata
 from app.services.sharing_service import access_share, revoke_share, to_metadata
+from app.services.resource_authorization import require_document_access
 
 
 router = APIRouter(prefix="/api/shares", tags=["sharing"])
 
 
+@router.get("/received", response_model=list[ShareMetadata])
+def get_received_shares(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    shares = db.scalars(
+        select(DocumentTransfer)
+        .where(DocumentTransfer.to_user_id == current_user.id)
+        .order_by(DocumentTransfer.created_at.desc())
+    ).all()
+    return [to_metadata(share) for share in shares]
+
+
 @router.get("/{share_id}", response_model=ShareMetadata)
-def get_share(share_id: uuid.UUID, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def get_share(share_id: uuid.UUID, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     share = db.get(DocumentTransfer, share_id)
     if share is None:
+        raise HTTPException(status_code=404, detail="Share not found.")
+    if current_user.role.upper() != "ADMIN" and current_user.id not in {share.from_user_id, share.to_user_id}:
         raise HTTPException(status_code=404, detail="Share not found.")
     return to_metadata(share)
 
@@ -27,6 +44,8 @@ def get_share(share_id: uuid.UUID, db: Session = Depends(get_db), _: User = Depe
 def revoke_document_share(share_id: uuid.UUID, db: Session = Depends(get_db), current_user: User = Depends(require_roles("ADMIN", "INVESTIGATOR"))):
     share = db.get(DocumentTransfer, share_id)
     if share is None:
+        raise HTTPException(status_code=404, detail="Share not found.")
+    if current_user.role.upper() != "ADMIN" and share.from_user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Share not found.")
     return revoke_share(db, share, current_user.id)
 

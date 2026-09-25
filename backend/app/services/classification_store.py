@@ -20,7 +20,7 @@ def save_classification(
     consistency_checks: list[dict[str, Any]] | None = None,
     raw_text: str | None = None,
     provider: str = "groq",
-    model: str = "qwen/qwen3.8-27b",
+    model: str = "openai/gpt-oss-120b",
 ) -> None:
     _results[document_id] = result
 

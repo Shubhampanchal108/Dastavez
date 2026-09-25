@@ -18,23 +18,22 @@ import {
   Server,
   ChevronRight,
   Shield,
-  CheckCircle,
 } from 'lucide-react';
 import { MetricCard } from '@/components/metric-card';
 import { DocumentTable } from '@/components/document-table';
-import { useDocuments, useAuditLogs, useShares, useCurrentOfficer } from '@/lib/store';
+import { useDocuments, useDocumentsStatus, useAuditLogs, useAuditLogsStatus, useCurrentOfficer } from '@/lib/store';
 
 export default function DashboardPage() {
   const officer = useCurrentOfficer();
   const documents = useDocuments();
+  const documentsStatus = useDocumentsStatus();
   const auditLogs = useAuditLogs();
-  const shares = useShares();
+  const auditLogsStatus = useAuditLogsStatus();
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('ALL');
 
   // Stats
   const totalDocs = documents.length;
   const anchoredDocs = documents.filter((d) => d.block_number).length;
-  const activeShares = shares.filter((s) => s.status === 'ACTIVE').length;
   const verifiedCount = documents.filter((d) => d.status === 'VERIFIED' || d.status === 'SEALED').length;
 
   // Filtered documents
@@ -56,7 +55,7 @@ export default function DashboardPage() {
             Welcome back, {officer.name}
           </h1>
           <p className="text-sm text-slate-300 mt-1 max-w-xl">
-            Institutional terminal active for <span className="font-semibold text-white">{officer.department}</span>. All operations are signed with cryptographic SHA-256 integrity checks.
+            Authenticated role: <span className="font-semibold text-white">{officer.role}</span>
           </p>
         </div>
 
@@ -85,41 +84,33 @@ export default function DashboardPage() {
       {/* KPI Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <MetricCard
-          title="Total Documents"
-          value={totalDocs}
-          subtitle="Registered in evidence vault"
-          trend="+12% this month"
-          trendPositive={true}
+          title="Documents Loaded"
+          value={documentsStatus.loading ? '...' : totalDocs}
+          subtitle="Current backend document page"
           icon={FileText}
           iconBg="bg-blue-50"
           iconColor="text-blue-600"
         />
         <MetricCard
           title="Blockchain Anchored"
-          value={anchoredDocs}
+          value={documentsStatus.loading ? '...' : anchoredDocs}
           subtitle="Immutable EVM proofs"
-          trend="100% Verified"
-          trendPositive={true}
           icon={Blocks}
           iconBg="bg-indigo-50"
           iconColor="text-indigo-600"
         />
         <MetricCard
           title="Active Secure Shares"
-          value={activeShares}
-          subtitle="Authorized external access"
-          trend="RBAC Monitored"
-          trendPositive={true}
+          value="N/A"
+          subtitle="Share statistics unavailable"
           icon={Share2}
           iconBg="bg-purple-50"
           iconColor="text-purple-600"
         />
         <MetricCard
           title="Cryptographic Verifications"
-          value={verifiedCount}
+          value={documentsStatus.loading ? '...' : verifiedCount}
           subtitle="Zero-tamper confirmed"
-          trend="100% Match"
-          trendPositive={true}
           icon={ShieldCheck}
           iconBg="bg-emerald-50"
           iconColor="text-emerald-600"
@@ -155,14 +146,14 @@ export default function DashboardPage() {
           </div>
 
           {/* Documents Table Component */}
-          <DocumentTable documents={filteredDocs.slice(0, 6)} />
+          {documentsStatus.loading ? <p className="p-8 text-center text-xs text-slate-500">Loading documents...</p> : documentsStatus.error ? <p className="p-8 text-center text-xs text-rose-700">{documentsStatus.error}</p> : <DocumentTable documents={filteredDocs.slice(0, 6)} />}
 
           <div className="flex justify-end pt-1">
             <Link
               href="/documents"
               className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
             >
-              <span>View all {totalDocs} documents</span>
+              <span>View all loaded documents</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -186,6 +177,9 @@ export default function DashboardPage() {
             </div>
 
             <div className="space-y-4">
+              {auditLogsStatus.loading && <p className="text-xs text-slate-500">Loading activity...</p>}
+              {!auditLogsStatus.loading && auditLogsStatus.error && <p className="text-xs text-rose-700">{auditLogsStatus.error}</p>}
+              {!auditLogsStatus.loading && !auditLogsStatus.error && auditLogs.length === 0 && <p className="text-xs text-slate-500">No records found.</p>}
               {auditLogs.slice(0, 4).map((log, idx) => (
                 <div key={log.id} className="relative pl-6 text-xs group">
                   {/* Timeline dot & line */}
@@ -199,7 +193,7 @@ export default function DashboardPage() {
                       {log.action.replace('_', ' ')}
                     </span>
                     <span className="text-[10px] text-slate-400 shrink-0">
-                      {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(log.timestamp).toISOString().slice(11, 16)} UTC
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-600 line-clamp-2 mt-0.5 leading-relaxed">
@@ -223,19 +217,19 @@ export default function DashboardPage() {
             <div className="space-y-2 text-xs divide-y divide-slate-800 pt-1">
               <div className="flex items-center justify-between pt-2">
                 <span className="text-slate-400">Security Standard</span>
-                <span className="font-semibold text-white">ISO/IEC 27001</span>
+                <span className="font-semibold text-white">N/A</span>
               </div>
               <div className="flex items-center justify-between pt-2">
                 <span className="text-slate-400">Hash Algorithm</span>
-                <span className="font-mono text-emerald-400">SHA-256 (256-bit)</span>
+                <span className="font-mono text-emerald-400">N/A</span>
               </div>
               <div className="flex items-center justify-between pt-2">
                 <span className="text-slate-400">AI Classification Model</span>
-                <span className="font-semibold text-indigo-300">Qwen 3.8 (Groq/Ollama)</span>
+                <span className="font-semibold text-indigo-300">N/A</span>
               </div>
               <div className="flex items-center justify-between pt-2">
                 <span className="text-slate-400">EVM Proof Network</span>
-                <span className="font-semibold text-blue-400">Ethereum Sepolia / Local</span>
+                <span className="font-semibold text-blue-400">N/A</span>
               </div>
             </div>
 

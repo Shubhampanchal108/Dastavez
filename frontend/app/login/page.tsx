@@ -4,40 +4,27 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Shield,
-  KeyRound,
   Lock,
   Mail,
   ArrowRight,
-  CheckCircle2,
   AlertCircle,
   Eye,
   EyeOff,
-  UserCheck,
   Fingerprint,
 } from 'lucide-react';
-import { OFFICER_PRESETS, OfficerPreset } from '@/lib/mockData';
-import { DocumentStore } from '@/lib/store';
-import { DmsApi, ApiConfig } from '@/lib/api';
+import { DmsApi } from '@/lib/api';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [step, setStep] = useState<'credentials' | 'otp'>('credentials');
-  const [selectedPreset, setSelectedPreset] = useState<OfficerPreset>(OFFICER_PRESETS[0]);
-  const [email, setEmail] = useState(OFFICER_PRESETS[0].email);
-  const [password, setPassword] = useState('SecretPass@2026');
+  const [step, setStep] = useState<'credentials' | 'otp' | 'authenticator'>('credentials');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [otp, setOtp] = useState('');
-  const [challengeId, setChallengeId] = useState<string>('challenge-demo-8421');
-  const [devOtp, setDevOtp] = useState<string>('842190');
+  const [challengeId, setChallengeId] = useState<string | null>(null);
+  const [devOtp, setDevOtp] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const handleSelectPreset = (preset: OfficerPreset) => {
-    setSelectedPreset(preset);
-    setEmail(preset.email);
-    setPassword('SecretPass@2026');
-    setErrorMsg(null);
-  };
 
   const handleCredentialsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,20 +34,52 @@ export default function LoginPage() {
     }
     setIsLoading(true);
     setErrorMsg(null);
+    setOtp('');
+    setDevOtp(null);
+    setChallengeId(null);
 
     try {
       const res = await DmsApi.login(email, password);
-      if (res.data && res.data.challenge_id) {
-        setChallengeId(res.data.challenge_id);
-        if (res.data.dev_otp) setDevOtp(res.data.dev_otp);
+      if (!res.data) {
+        setErrorMsg(res.error || 'Unable to start login challenge.');
+        return;
       }
+
+      if (res.data.status !== 'OTP_REQUIRED') {
+        setStep('authenticator');
+        void waitForAuthenticatorApproval(res.data.challenge_id);
+        return;
+      }
+
+      setChallengeId(res.data.challenge_id);
+      setDevOtp(res.data.dev_otp || null);
       setStep('otp');
-    } catch {
-      // Fallback to local dev flow
-      setStep('otp');
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : 'Unable to start login challenge.');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const waitForAuthenticatorApproval = async (id: string) => {
+    for (let attempt = 0; attempt < 150; attempt += 1) {
+      const res = await DmsApi.getAuthenticatorChallengeStatus(id);
+      if (res.data?.status === 'APPROVED') {
+        const completed = await DmsApi.completeAuthenticator(id);
+        if (!completed.data?.access_token) {
+          setErrorMsg(completed.error || 'Mobile approval could not complete login.');
+          return;
+        }
+        router.push('/');
+        return;
+      }
+      if (res.data?.status !== 'PENDING') {
+        setErrorMsg(res.error || 'Mobile authentication challenge expired.');
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+    setErrorMsg('Mobile approval timed out. Start login again.');
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
@@ -69,22 +88,26 @@ export default function LoginPage() {
       setErrorMsg('Please enter the 6-digit OTP.');
       return;
     }
+    if (!challengeId) {
+      setErrorMsg('Login challenge expired. Start login again.');
+      return;
+    }
     setIsLoading(true);
     setErrorMsg(null);
 
     try {
-      await DmsApi.verifyOtp(challengeId, otp.trim());
-    } catch {
-      // Proceed with simulated success
+      const res = await DmsApi.verifyOtp(challengeId, otp.trim());
+      if (!res.data?.access_token) {
+        setErrorMsg(res.error || 'Invalid OTP.');
+        return;
+      }
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : 'Unable to verify OTP.');
+      return;
     }
 
-    DocumentStore.setCurrentOfficer(selectedPreset);
     setIsLoading(false);
     router.push('/');
-  };
-
-  const handleDevOtpFill = () => {
-    setOtp(devOtp || '842190');
   };
 
   return (
@@ -114,30 +137,6 @@ export default function LoginPage() {
 
         {step === 'credentials' ? (
           <div>
-            {/* Quick Officer Presets */}
-            <div className="mb-6">
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
-                Quick Select Officer Profile
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {OFFICER_PRESETS.map((preset) => (
-                  <button
-                    key={preset.badgeId}
-                    type="button"
-                    onClick={() => handleSelectPreset(preset)}
-                    className={`p-2.5 rounded-xl border text-left transition-all ${
-                      selectedPreset.badgeId === preset.badgeId
-                        ? 'bg-blue-600/20 border-blue-500 text-white shadow-sm'
-                        : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
-                    }`}
-                  >
-                    <span className="block text-xs font-bold truncate">{preset.name}</span>
-                    <span className="text-[10px] text-slate-400 block">{preset.role}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <form onSubmit={handleCredentialsSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5">
@@ -196,7 +195,7 @@ export default function LoginPage() {
               </button>
             </form>
           </div>
-        ) : (
+        ) : step === 'otp' ? (
           <form onSubmit={handleVerifyOtp} className="space-y-5">
             <div className="p-3 bg-blue-950/40 border border-blue-800/60 rounded-xl text-xs text-blue-200">
               <div className="flex items-center gap-2 mb-1">
@@ -204,29 +203,25 @@ export default function LoginPage() {
                 <span className="font-bold text-white">Cryptographic Challenge Issued</span>
               </div>
               <p className="text-[11px] text-slate-300 leading-relaxed">
-                A 6-digit authentication token has been generated for {selectedPreset.name} ({selectedPreset.badgeId}).
+                A 6-digit authentication token has been generated for {email}.
               </p>
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-semibold text-slate-300">
-                  Enter 6-Digit OTP Token
-                </label>
-                <button
-                  type="button"
-                  onClick={handleDevOtpFill}
-                  className="text-[11px] text-blue-400 hover:underline font-semibold"
-                >
-                  Auto-fill ({devOtp})
-                </button>
-              </div>
+              {devOtp && (
+                <p className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
+                  Development OTP for this login: <strong>{devOtp}</strong>
+                </p>
+              )}
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                Enter 6-Digit OTP Token
+              </label>
               <input
                 type="text"
                 maxLength={6}
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
-                placeholder="842190"
+                placeholder="Enter code from your mobile app"
                 className="w-full text-center tracking-[0.5em] text-lg font-mono py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-hidden focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
             </div>
@@ -248,6 +243,19 @@ export default function LoginPage() {
               </button>
             </div>
           </form>
+        ) : (
+          <div className="space-y-5">
+            <div className="p-4 bg-blue-950/40 border border-blue-800/60 rounded-xl text-sm text-blue-100">
+              Approve this login from your registered DMS mobile authenticator. Keep this page open while the mobile approval is completed.
+            </div>
+            <button
+              type="button"
+              onClick={() => setStep('credentials')}
+              className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
         )}
 
         <div className="mt-8 pt-4 border-t border-slate-800/80 text-center text-[11px] text-slate-500">

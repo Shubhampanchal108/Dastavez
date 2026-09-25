@@ -4,22 +4,25 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   Bell,
-  CheckCircle2,
   Share2,
   Blocks,
   ShieldAlert,
   Sparkles,
   Fingerprint,
 } from 'lucide-react';
-import { INITIAL_NOTIFICATIONS, NotificationItem } from '@/lib/mockData';
+interface NotificationItem {
+  id: string;
+  title: string;
+  description: string;
+  timestamp: string;
+  category: 'SHARE' | 'BLOCKCHAIN' | 'VALIDATION' | 'INTEGRITY' | 'SECURITY';
+  isRead: boolean;
+  docId?: string;
+}
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
+  const notifications: NotificationItem[] = [];
   const [filter, setFilter] = useState('ALL');
-
-  const handleMarkAllRead = () => {
-    setNotifications(notifications.map((n) => ({ ...n, isRead: true })));
-  };
 
   const filtered = filter === 'ALL'
     ? notifications
@@ -56,12 +59,6 @@ export default function NotificationsPage() {
           </p>
         </div>
 
-        <button
-          onClick={handleMarkAllRead}
-          className="text-xs font-semibold text-blue-600 hover:underline"
-        >
-          Mark all as read
-        </button>
       </div>
 
       {/* Filter Tabs */}
@@ -83,6 +80,7 @@ export default function NotificationsPage() {
 
       {/* Notifications List */}
       <div className="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100 overflow-hidden shadow-xs">
+        {filtered.length === 0 && <p className="p-6 text-center text-xs text-slate-500">No notifications found.</p>}
         {filtered.map((item) => (
           <div
             key={item.id}

@@ -14,7 +14,7 @@ import {
   ExternalLink,
   Shield,
 } from 'lucide-react';
-import { DmsDocument } from '@/lib/mockData';
+import { DmsDocument } from '@/lib/types';
 import { StatusBadge } from './status-badge';
 
 interface DocumentTableProps {
@@ -62,6 +62,13 @@ export function DocumentTable({ documents, onSelectDoc }: DocumentTableProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
+            {documents.length === 0 && (
+              <tr>
+                <td colSpan={8} className="py-12 px-4 text-center text-slate-500">
+                  No documents found.
+                </td>
+              </tr>
+            )}
             {documents.map((doc) => {
               const formattedDate = new Date(doc.created_at).toLocaleDateString('en-US', {
                 month: 'short',

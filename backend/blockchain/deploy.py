@@ -14,10 +14,11 @@ SOLC_VERSION = "0.8.20"
 load_dotenv(ROOT.parent / ".env")
 
 
-rpc_url = os.getenv("BLOCKCHAIN_RPC_URL", "http://127.0.0.1:8545")
+rpc_url = os.getenv("BLOCKCHAIN_RPC_URL", "").strip()
+configured_chain_id = os.getenv("BLOCKCHAIN_CHAIN_ID", "").strip()
 private_key = os.getenv("BLOCKCHAIN_PRIVATE_KEY")
-if not private_key:
-    raise RuntimeError("Set BLOCKCHAIN_PRIVATE_KEY in the environment before deployment.")
+if not rpc_url or not configured_chain_id or not private_key:
+    raise RuntimeError("Set BLOCKCHAIN_RPC_URL, BLOCKCHAIN_CHAIN_ID, and BLOCKCHAIN_PRIVATE_KEY in the environment before deployment.")
 
 install_solc(SOLC_VERSION)
 source = CONTRACT_PATH.read_text(encoding="utf-8")
@@ -25,7 +26,9 @@ compiled = compile_source(source, solc_version=SOLC_VERSION)
 contract_data = next(iter(compiled.values()))
 web3 = Web3(Web3.HTTPProvider(rpc_url))
 if not web3.is_connected():
-    raise RuntimeError(f"Cannot connect to blockchain RPC at {rpc_url}.")
+    raise RuntimeError("Cannot connect to the configured blockchain RPC.")
+if web3.eth.chain_id != int(configured_chain_id):
+    raise RuntimeError("Configured blockchain chain ID does not match the active network.")
 account = web3.eth.account.from_key(private_key)
 contract = web3.eth.contract(abi=contract_data["abi"], bytecode=contract_data["bin"])
 nonce = web3.eth.get_transaction_count(account.address)

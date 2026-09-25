@@ -9,12 +9,18 @@ from sqlalchemy.orm import Session
 
 from app.models.user import User
 from app.models.otp_challenge import OTPChallenge
-from app.services.otp_delivery import otp_delivery
+from app.services.otp_delivery import OTPDeliveryError, development_otp_enabled, otp_delivery, otp_setting
 from app.services.audit_service import record_audit_event
 
 
 ROLES = {"ADMIN", "INVESTIGATOR", "FORENSIC_OFFICER", "VIEWER"}
 password_hasher = PasswordHash.recommended()
+
+
+def _as_utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
 
 
 def normalize_role(role: str) -> str:
@@ -89,19 +95,26 @@ def create_login_otp_challenge(db: Session, user: User) -> OTPChallenge:
         user_id=user.id,
         otp_hash=hash_password(otp),
         created_at=now,
-        expires_at=now + timedelta(minutes=5),
+        expires_at=now + timedelta(minutes=otp_setting("OTP_EXPIRE_MINUTES", 5)),
         attempt_count=0,
-        max_attempts=5,
+        max_attempts=otp_setting("OTP_MAX_ATTEMPTS", 5),
         purpose="LOGIN",
         status="PENDING",
     )
     db.add(challenge)
     db.flush()
-    otp_delivery.deliver(user, challenge.id, otp)
+    try:
+        if not otp_delivery.deliver(user, challenge.id, otp):
+            raise OTPDeliveryError("OTP provider rejected the delivery request.")
+    except OTPDeliveryError as error:
+        challenge.status = "INVALIDATED"
+        db.commit()
+        raise HTTPException(status_code=503, detail="OTP delivery is unavailable. Try again later.") from error
     record_audit_event(db, user.id, "OTP_REQUIRED", "otp_challenge", challenge.id, "PENDING")
     db.commit()
     db.refresh(challenge)
-    challenge._dev_otp = otp
+    if development_otp_enabled():
+        challenge._dev_otp = otp
     return challenge
 
 
@@ -120,7 +133,7 @@ def verify_login_otp(db: Session, challenge_id, otp: str) -> tuple[User, OTPChal
         record_audit_event(db, challenge.user_id, "OTP_FAILURE", "otp_challenge", challenge.id, "DENIED")
         db.commit()
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid OTP.")
-    if challenge.expires_at <= now:
+    if _as_utc(challenge.expires_at) <= now:
         challenge.status = "EXPIRED"
         record_audit_event(db, challenge.user_id, "OTP_EXPIRED", "otp_challenge", challenge.id, "FAILED")
         db.commit()

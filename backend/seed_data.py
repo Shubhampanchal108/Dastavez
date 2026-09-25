@@ -1,8 +1,9 @@
-"""Seed script to populate initial users, cases, and documents with real AI accuracy and validation in DMS PostgreSQL database."""
+"""Seed script to populate initial users, cases, and documents in DMS."""
 
+import os
 import uuid
 from datetime import datetime, timezone
-from app.database import Base, SessionLocal, engine
+from app.database import SessionLocal
 from app.models.user import User
 from app.models.case import Case
 from app.models.document import Document
@@ -14,15 +15,18 @@ from app.services.auth_service import hash_password
 
 
 def seed():
-    Base.metadata.create_all(bind=engine)
+    seed_password = os.getenv("SEED_DEFAULT_PASSWORD")
+    if not seed_password:
+        raise RuntimeError("SEED_DEFAULT_PASSWORD must be set before running the seed script.")
+
     db = SessionLocal()
     try:
         # 1. Create or get test users
         users = [
-            ("Det. Vance", "investigator@dms.internal", "SecretPass@2026", "INVESTIGATOR"),
-            ("Chief Proctor", "admin@dms.internal", "SecretPass@2026", "ADMIN"),
-            ("Dr. Evans", "forensic@dms.internal", "SecretPass@2026", "FORENSIC_OFFICER"),
-            ("Officer Davis", "viewer@dms.internal", "SecretPass@2026", "VIEWER"),
+            ("Det. Vance", "investigator@dms.internal", seed_password, "INVESTIGATOR"),
+            ("Chief Proctor", "admin@dms.internal", seed_password, "ADMIN"),
+            ("Dr. Evans", "forensic@dms.internal", seed_password, "FORENSIC_OFFICER"),
+            ("Officer Davis", "viewer@dms.internal", seed_password, "VIEWER"),
         ]
 
         user_map = {}
@@ -259,7 +263,7 @@ def seed():
                 ai_res = DocumentAiResult(
                     document_id=d.id,
                     provider="groq",
-                    model="qwen/qwen3.8-27b",
+                    model="openai/gpt-oss-120b",
                     confidence=item["ai_confidence"],
                     document_type=item["ai_type"],
                     fields=item["fields"],

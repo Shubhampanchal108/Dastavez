@@ -22,9 +22,9 @@ function BlockchainContent() {
   const initialId = searchParams.get('id');
   const documents = useDocuments();
 
-  const [selectedDocId, setSelectedDocId] = useState<string>(initialId || documents[0]?.id || 'doc-101');
+  const [selectedDocId, setSelectedDocId] = useState<string>(initialId || '');
   const [isVerifying, setIsVerifying] = useState(false);
-  const [verifiedOnChain, setVerifiedOnChain] = useState(true);
+  const [verifiedOnChain, setVerifiedOnChain] = useState(false);
   const [copiedTx, setCopiedTx] = useState(false);
 
   const activeDoc = documents.find((d) => d.id === selectedDocId) || documents[0];
@@ -33,13 +33,13 @@ function BlockchainContent() {
     if (!activeDoc) return;
     setIsVerifying(true);
     try {
-      await DmsApi.getBlockchainVerify(activeDoc.id);
+      const response = await DmsApi.getBlockchainVerify(activeDoc.id);
+      setVerifiedOnChain(Boolean(response.data));
     } catch {
       // simulated success
     }
     setTimeout(() => {
       setIsVerifying(false);
-      setVerifiedOnChain(true);
     }, 800);
   };
 
@@ -111,7 +111,7 @@ function BlockchainContent() {
 
           <div className="text-right font-mono">
             <span className="text-xs text-indigo-300 block">EVM BLOCK HEIGHT</span>
-            <span className="text-2xl font-black text-white">#{activeDoc.block_number || '4921842'}</span>
+            <span className="text-2xl font-black text-white">{activeDoc.block_number ? `#${activeDoc.block_number}` : 'Unavailable'}</span>
           </div>
         </div>
 
@@ -138,7 +138,7 @@ function BlockchainContent() {
               </button>
             </div>
             <p className="text-blue-300 break-all leading-normal text-[11px]">
-              {activeDoc.blockchain_tx || '0x7e8a9d12345bcdef90123456789abcdef0123456789abcdef0123456789abcde'}
+              {activeDoc.blockchain_tx || 'Unavailable'}
             </p>
           </div>
 

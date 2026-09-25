@@ -16,7 +16,7 @@ class DocumentAiResult(Base):
         ForeignKey("documents.id", ondelete="CASCADE"), unique=True, nullable=False, index=True
     )
     provider: Mapped[str] = mapped_column(String(50), nullable=False, default="groq")
-    model: Mapped[str] = mapped_column(String(100), nullable=False, default="qwen/qwen3.8-27b")
+    model: Mapped[str] = mapped_column(String(100), nullable=False, default="openai/gpt-oss-120b")
     confidence: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     document_type: Mapped[str] = mapped_column(String(100), nullable=False, default="Other")
     fields: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)

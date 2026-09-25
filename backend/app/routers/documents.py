@@ -29,6 +29,7 @@ from app.services.version_service import create_initial_version, get_next_versio
 from app.schemas.sharing import ShareCreate, ShareAccessRequest, ShareAccessResponse, ShareMetadata
 from app.services.sharing_service import create_share, list_shares
 from app.services.audit_service import record_audit_event
+from app.services.resource_authorization import document_visibility_clause, require_document_access
 
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
@@ -91,28 +92,13 @@ def upload_document(
 
     try:
         content, file_hash, file_size = read_and_hash_upload(file)
-        storage_path = ""
-        storage_provider = "local"
-        c_public_id = None
-        c_res_type = None
-        c_version = None
-
-        try:
-            cloudinary_result = upload_to_cloudinary(content, str(case.id), str(document_id))
-            cloudinary_uploaded = True
-            storage_path = f"cloudinary://{cloudinary_result['public_id']}"
-            storage_provider = "cloudinary"
-            c_public_id = cloudinary_result["public_id"]
-            c_res_type = cloudinary_result.get("resource_type", "raw")
-            c_version = cloudinary_result.get("version")
-        except Exception:
-            import os
-            os.makedirs("uploads", exist_ok=True)
-            local_dest = os.path.join("uploads", f"{document_id}_{safe_filename}")
-            with open(local_dest, "wb") as f:
-                f.write(content.getvalue())
-            storage_path = f"local://{local_dest}"
-            storage_provider = "local"
+        cloudinary_result = upload_to_cloudinary(content, str(case.id), str(document_id))
+        cloudinary_uploaded = True
+        storage_path = f"cloudinary://{cloudinary_result['public_id']}"
+        storage_provider = "cloudinary"
+        c_public_id = cloudinary_result["public_id"]
+        c_res_type = cloudinary_result.get("resource_type", "raw")
+        c_version = cloudinary_result.get("version")
 
         document = Document(
             id=document_id,
@@ -161,10 +147,11 @@ def list_documents(
     limit: int = Query(default=50, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     return (
-        db.query(Document)
+        db.query(Document).join(Case)
+        .filter(document_visibility_clause(current_user))
         .order_by(Document.created_at.desc())
         .offset(offset)
         .limit(limit)
@@ -206,8 +193,8 @@ def search_documents(
         filters.append(Document.status.ilike(status.strip()))
 
     documents = (
-        db.query(Document)
-        .filter(and_(*filters) if filters else True)
+        db.query(Document).join(Case)
+        .filter(and_(document_visibility_clause(current_user), *filters) if filters else document_visibility_clause(current_user))
         .order_by(Document.created_at.desc())
         .offset(offset)
         .limit(limit)
@@ -232,16 +219,18 @@ def get_document(document_id: uuid.UUID, db: Session = Depends(get_db), current_
     document = db.get(Document, document_id)
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found.")
+    require_document_access(db, document, current_user)
     record_audit_event(db, current_user.id, "DOCUMENT_VIEWED", "document", document.id, "SUCCESS", document_id=document.id)
     db.commit()
     return document
 
 
 @router.get("/{document_id}/storage-check")
-def check_document_storage(document_id: uuid.UUID, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def check_document_storage(document_id: uuid.UUID, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     document = db.get(Document, document_id)
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found.")
+    require_document_access(db, document, current_user)
     result = verify_cloudinary_resource(document.cloudinary_public_id, document.cloudinary_resource_type or "raw")
     return {
         "document_id": document.id,
@@ -257,6 +246,7 @@ def extract_document_text(document_id: uuid.UUID, db: Session = Depends(get_db),
     document = db.get(Document, document_id)
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found.")
+    require_document_access(db, document, current_user)
     if document.storage_provider != "cloudinary" or not document.cloudinary_public_id:
         raise HTTPException(status_code=409, detail="This document is not stored in Cloudinary.")
     if document.mime_type != "application/pdf":
@@ -279,6 +269,7 @@ def validate_document_required_fields(document_id: uuid.UUID, db: Session = Depe
     document = db.get(Document, document_id)
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found.")
+    require_document_access(db, document, current_user)
     classification = get_classification(str(document_id), db=db)
     if classification is None:
         raise HTTPException(status_code=422, detail="Classify this document first, then run required-field validation.")
@@ -302,6 +293,7 @@ def validate_document_metadata(document_id: uuid.UUID, db: Session = Depends(get
     document = db.get(Document, document_id)
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found.")
+    require_document_access(db, document, current_user)
     classification = get_classification(str(document_id), db=db)
     if classification is None:
         raise HTTPException(status_code=422, detail="Classify this document first, then run metadata consistency checking.")
@@ -334,6 +326,7 @@ def check_document_duplicates(document_id: uuid.UUID, db: Session = Depends(get_
     document = db.get(Document, document_id)
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found.")
+    require_document_access(db, document, current_user)
     result = find_duplicates(db, document)
     record_audit_event(db, current_user.id, "DOCUMENT_DUPLICATES_CHECKED", "document", document.id, "SUCCESS", {"duplicate_count": result.duplicate_count}, document_id=document.id)
     db.commit()
@@ -351,7 +344,8 @@ def upload_document_version(
     document = db.get(Document, document_id)
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found.")
-    version = upload_new_version(db, document, file, get_temporary_user(db), change_reason)
+    require_document_access(db, document, current_user)
+    version = upload_new_version(db, document, file, current_user, change_reason)
     version.is_latest = True
     record_audit_event(db, current_user.id, "DOCUMENT_VERSION_CREATED", "document_version", version.id, "SUCCESS", document_id=document_id)
     db.commit()
@@ -360,8 +354,10 @@ def upload_document_version(
 
 @router.get("/{document_id}/versions", response_model=list[DocumentVersionMetadata])
 def get_document_versions(document_id: uuid.UUID, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    if db.get(Document, document_id) is None:
+    document = db.get(Document, document_id)
+    if document is None:
         raise HTTPException(status_code=404, detail="Document not found.")
+    require_document_access(db, document, current_user)
     versions = list_versions(db, document_id)
     latest_number = versions[-1].version_number if versions else None
     record_audit_event(db, current_user.id, "DOCUMENT_VERSIONS_VIEWED", "document", document_id, "SUCCESS", document_id=document_id)
@@ -373,10 +369,11 @@ def get_document_versions(document_id: uuid.UUID, db: Session = Depends(get_db),
 
 
 @router.get("/{document_id}/versions/{version_number}", response_model=DocumentVersionMetadata)
-def get_document_version(document_id: uuid.UUID, version_number: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def get_document_version(document_id: uuid.UUID, version_number: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     document = db.get(Document, document_id)
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found.")
+    require_document_access(db, document, current_user)
     version = next((item for item in list_versions(db, document_id) if item.version_number == version_number), None)
     if version is None:
         raise HTTPException(status_code=404, detail="Document version not found.")
@@ -389,14 +386,20 @@ def create_document_share(document_id: uuid.UUID, request: ShareCreate, db: Sess
     document = db.get(Document, document_id)
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found.")
+    require_document_access(db, document, current_user)
     return create_share(db, document, current_user, request)
 
 
 @router.get("/{document_id}/shares", response_model=list[ShareMetadata])
-def get_document_shares(document_id: uuid.UUID, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
-    if db.get(Document, document_id) is None:
+def get_document_shares(document_id: uuid.UUID, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    document = db.get(Document, document_id)
+    if document is None:
         raise HTTPException(status_code=404, detail="Document not found.")
-    return list_shares(db, document_id)
+    require_document_access(db, document, current_user)
+    shares = list_shares(db, document_id)
+    if current_user.role.upper() == "ADMIN" or document.uploaded_by == current_user.id or (document.case and document.case.created_by == current_user.id):
+        return shares
+    return [share for share in shares if share.recipient_user_id == current_user.id]
 
 
 

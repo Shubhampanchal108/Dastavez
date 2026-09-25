@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timedelta, timezone
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -9,6 +10,7 @@ from app.database import Base, get_db
 from app.main import app
 from app.models.audit_log import AuditLog
 from app.models.authenticator_device import AuthenticatorDevice
+from app.models.authenticator_challenge import AuthenticatorChallenge
 from app.models.user import User
 from app.services.auth_service import create_access_token, hash_password
 
@@ -173,3 +175,90 @@ def test_device_registration_rejects_duplicate_ownership_conflicts_and_keeps_exi
     )
     assert otp_login.status_code == 200, otp_login.text
     assert otp_login.json()['status'] == 'OTP_REQUIRED'
+
+
+def test_authenticator_challenge_reads_require_matching_authenticated_user_and_device():
+    user_a = make_user('challenge.user.a@example.com', name='Challenge User A')
+    user_b = make_user('challenge.user.b@example.com', name='Challenge User B')
+    token_a = create_access_token(user_a)
+    token_b = create_access_token(user_b)
+    db = SessionLocal()
+    try:
+        device = AuthenticatorDevice(
+            user_id=user_a.id,
+            device_identifier='challenge-device-a',
+            is_active=True,
+        )
+        challenge = AuthenticatorChallenge(
+            user_id=user_a.id,
+            authenticator_device=device,
+            status='PENDING',
+            expires_at=datetime.now(timezone.utc) + timedelta(minutes=5),
+        )
+        db.add_all([device, challenge])
+        db.commit()
+        db.refresh(challenge)
+        challenge_id = str(challenge.id)
+    finally:
+        db.close()
+
+    assert client.get(f'/api/auth/authenticator-challenge/{challenge_id}').status_code == 401
+    assert client.get(
+        f'/api/auth/authenticator-challenge/{challenge_id}',
+        headers={'Authorization': f'Bearer {token_b}'},
+    ).status_code == 403
+    allowed = client.get(
+        f'/api/auth/authenticator-challenge/{challenge_id}',
+        headers={'Authorization': f'Bearer {token_a}'},
+    )
+    assert allowed.status_code == 200
+    assert allowed.json()['challenge_id'] == challenge_id
+
+    assert client.get('/api/auth/authenticator-challenges/device/challenge-device-a').status_code == 401
+    assert client.get(
+        '/api/auth/authenticator-challenges/device/challenge-device-a',
+        headers={'Authorization': f'Bearer {token_b}'},
+    ).status_code == 404
+    device_pending = client.get(
+        '/api/auth/authenticator-challenges/device/challenge-device-a',
+        headers={'Authorization': f'Bearer {token_a}'},
+    )
+    assert device_pending.status_code == 200
+    assert device_pending.json()[0]['challenge_id'] == challenge_id
+
+
+def test_authenticator_challenge_reads_exclude_revoked_devices_and_expire_pending_challenges():
+    user = make_user('challenge.expired@example.com', name='Expired Challenge User')
+    token = create_access_token(user)
+    db = SessionLocal()
+    try:
+        device = AuthenticatorDevice(
+            user_id=user.id,
+            device_identifier='expired-device',
+            is_active=True,
+            revoked_at=datetime.now(timezone.utc),
+        )
+        expired = AuthenticatorChallenge(
+            user_id=user.id,
+            authenticator_device=device,
+            status='PENDING',
+            expires_at=datetime.now(timezone.utc) - timedelta(minutes=1),
+        )
+        db.add_all([device, expired])
+        db.commit()
+        db.refresh(expired)
+        challenge_id = str(expired.id)
+    finally:
+        db.close()
+
+    status_response = client.get(
+        f'/api/auth/authenticator-challenge/{challenge_id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+    assert status_response.status_code == 200
+    assert status_response.json()['status'] == 'EXPIRED'
+    revoked_response = client.get(
+        '/api/auth/authenticator-challenges/device/expired-device',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+    assert revoked_response.status_code == 404

@@ -11,8 +11,7 @@ import {
   Lock,
   LogOut,
 } from 'lucide-react';
-import { useCurrentOfficer, DocumentStore } from '@/lib/store';
-import { OFFICER_PRESETS } from '@/lib/mockData';
+import { useCurrentOfficer } from '@/lib/store';
 
 export default function ProfilePage() {
   const officer = useCurrentOfficer();
@@ -44,7 +43,6 @@ export default function ProfilePage() {
             </span>
           </div>
           <p className="text-sm text-slate-300">{officer.department}</p>
-          <p className="text-xs font-mono text-blue-300">{officer.email}</p>
 
           <div className="pt-3 flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs">
             <span className="px-2.5 py-1 rounded-md bg-white/10 border border-white/20 text-slate-200">
@@ -66,28 +64,8 @@ export default function ProfilePage() {
         </Link>
       </div>
 
-      {/* Switch Officer Presets */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
-        <h2 className="text-sm font-bold text-slate-900">Switch Active Officer Identity</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {OFFICER_PRESETS.map((preset) => (
-            <button
-              key={preset.badgeId}
-              onClick={() => DocumentStore.setCurrentOfficer(preset)}
-              className={`p-4 rounded-xl border text-left transition-all ${
-                officer.badgeId === preset.badgeId
-                  ? 'bg-blue-50 border-blue-500 shadow-2xs'
-                  : 'hover:border-slate-300'
-              }`}
-            >
-              <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-800 text-xs font-bold flex items-center justify-center mb-2">
-                {preset.avatarInitials}
-              </div>
-              <p className="font-bold text-xs text-slate-900">{preset.name}</p>
-              <p className="text-[11px] text-slate-500">{preset.badgeId} • {preset.role}</p>
-            </button>
-          ))}
-        </div>
+      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs text-xs text-slate-500">
+        Active identity and clearance are supplied by the authenticated backend session.
       </div>
 
       {/* Active Workstation Sessions */}

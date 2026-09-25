@@ -5,100 +5,57 @@ import {
   DatabaseBackup,
   ShieldCheck,
   RefreshCw,
-  Download,
   CheckCircle2,
-  AlertCircle,
   HardDrive,
-  FileCheck,
-  Clock,
 } from 'lucide-react';
 import { DmsApi } from '@/lib/api';
-import { DocumentStore, useCurrentOfficer } from '@/lib/store';
-
-const INITIAL_BACKUPS = [
-  {
-    id: 'snap-2026-09-15',
-    filename: 'SNAPSHOT_DMS_2026_09_15_FULL.enc',
-    size: '28.4 GB',
-    sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-    created_at: '2026-09-15 06:00:00 IST',
-    type: 'Full Multi-Region Snapshot',
-    status: 'RESTORE_VERIFIED',
-  },
-  {
-    id: 'snap-2026-09-08',
-    filename: 'SNAPSHOT_DMS_2026_09_08_FULL.enc',
-    size: '27.1 GB',
-    sha256: 'a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0',
-    created_at: '2026-09-08 06:00:00 IST',
-    type: 'Weekly Archive Snapshot',
-    status: 'RESTORE_VERIFIED',
-  },
-];
 
 export default function BackupPage() {
-  const officer = useCurrentOfficer();
-  const [backups, setBackups] = useState(INITIAL_BACKUPS);
   const [isCreating, setIsCreating] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [bannerMsg, setBannerMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [restoreFile, setRestoreFile] = useState<File | null>(null);
+  const [backupResult, setBackupResult] = useState<any>(null);
+  const [restoreResult, setRestoreResult] = useState<any>(null);
 
   const handleCreateSnapshot = async () => {
     setIsCreating(true);
     setBannerMsg(null);
+    setErrorMsg(null);
 
     try {
-      await DmsApi.createBackup();
-    } catch {
-      // simulated
-    }
-
-    setTimeout(() => {
-      const newBackup = {
-        id: `snap-${Date.now().toString().slice(-4)}`,
-        filename: `SNAPSHOT_DMS_${new Date().toISOString().slice(0, 10)}_MANUAL.enc`,
-        size: '28.9 GB',
-        sha256: '8f72a44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b992',
-        created_at: new Date().toLocaleString(),
-        type: 'On-Demand Encrypted Snapshot',
-        status: 'RESTORE_VERIFIED',
-      };
-      setBackups([newBackup, ...backups]);
+      const response = await DmsApi.createBackup();
+      if (response.data) {
+        setBackupResult(response.data);
+        setBannerMsg(`Backup ${response.data.backup_filename} completed and integrity was verified.`);
+      } else {
+        setErrorMsg(response.error || 'Backup creation failed.');
+      }
+    } finally {
       setIsCreating(false);
-      setBannerMsg('New AES-256 encrypted database snapshot created and verified.');
-
-      DocumentStore.addAuditLog({
-        actor: officer.name,
-        actor_role: officer.role,
-        action: 'BACKUP_CREATED',
-        action_category: 'ADMIN',
-        reference: newBackup.id,
-        ip_address: '127.0.0.1 (Desktop)',
-        status: 'SUCCESS',
-        details: `Created snapshot ${newBackup.filename} (${newBackup.size})`,
-      });
-    }, 1200);
+    }
   };
 
-  const handleRunRestoreTest = () => {
+  const handleRunRestoreTest = async () => {
+    if (!restoreFile) {
+      setErrorMsg('Select a backup ZIP before running restore verification.');
+      return;
+    }
     setIsTesting(true);
     setBannerMsg(null);
+    setErrorMsg(null);
 
-    setTimeout(() => {
-      setIsTesting(false);
-      setBannerMsg('Automated restore test passed! 100% database schema & ledger tables verified in non-destructive sandbox.');
-
-      DocumentStore.addAuditLog({
-        actor: officer.name,
-        actor_role: officer.role,
-        action: 'RESTORE_TEST_VERIFIED',
-        action_category: 'ADMIN',
-        reference: backups[0].id,
-        ip_address: '127.0.0.1 (Desktop)',
-        status: 'SUCCESS',
-        details: 'Automated sandbox restore test verified zero data loss.',
-      });
-    }, 1400);
+    const formData = new FormData();
+    formData.append('backup', restoreFile);
+    const response = await DmsApi.restoreTest(formData);
+    if (response.data) {
+      setRestoreResult(response.data);
+      setBannerMsg(`Restore verification ${response.data.status.toLowerCase()}.`);
+    } else {
+      setErrorMsg(response.error || 'Restore verification failed.');
+    }
+    setIsTesting(false);
   };
 
   return (
@@ -117,15 +74,6 @@ export default function BackupPage() {
 
         <div className="flex items-center gap-2.5">
           <button
-            onClick={handleRunRestoreTest}
-            disabled={isTesting}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-colors"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isTesting ? 'animate-spin' : ''}`} />
-            <span>{isTesting ? 'Testing Sandbox...' : 'Run Restore Test'}</span>
-          </button>
-
-          <button
             onClick={handleCreateSnapshot}
             disabled={isCreating}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors"
@@ -142,43 +90,32 @@ export default function BackupPage() {
           <span>{bannerMsg}</span>
         </div>
       )}
+      {errorMsg && <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-900 text-xs">{errorMsg}</div>}
+
+      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-4">
+        <div>
+          <h2 className="text-sm font-bold text-slate-900">Isolated Restore Verification</h2>
+          <p className="text-xs text-slate-500 mt-1">Uploads a backup ZIP for temporary-database verification only. The production database is not restored.</p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+          <input type="file" accept=".zip,application/zip" onChange={(event) => setRestoreFile(event.target.files?.[0] || null)} className="text-xs" />
+          <button onClick={() => void handleRunRestoreTest()} disabled={isTesting} className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold">
+            <RefreshCw className={`w-3.5 h-3.5 ${isTesting ? 'animate-spin' : ''}`} />
+            <span>{isTesting ? 'Testing Sandbox...' : 'Run Restore Test'}</span>
+          </button>
+        </div>
+        {restoreResult && <p className="text-xs text-slate-600">Status: <strong>{restoreResult.status}</strong> · Backup valid: {String(restoreResult.backup_valid)} · Database restored in isolated test database: {String(restoreResult.database_restored)} · Cloudinary modified: {String(restoreResult.cloudinary_modified)}</p>}
+      </div>
 
       {/* Snapshot List */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-900">Encrypted Snapshot Archives ({backups.length})</h2>
-          <span className="text-xs text-slate-500 font-mono">Encryption: AES-256-GCM</span>
+          <h2 className="text-sm font-bold text-slate-900">Backup Results</h2>
+          <span className="text-xs text-slate-500">No backup listing endpoint available</span>
         </div>
 
         <div className="divide-y divide-slate-100">
-          {backups.map((snap) => (
-            <div key={snap.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/60 transition-colors">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-xs text-slate-900">{snap.filename}</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                    {snap.status.replace('_', ' ')}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500">
-                  {snap.type} • Created: {snap.created_at} • Size: <strong className="text-slate-700">{snap.size}</strong>
-                </p>
-                <p className="text-[11px] font-mono text-slate-400 break-all">
-                  SHA-256: {snap.sha256}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  onClick={() => alert(`Downloading archive verification certificate for ${snap.filename}`)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition-colors"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download Manifest</span>
-                </button>
-              </div>
-            </div>
-          ))}
+          {backupResult ? <div className="p-5 text-xs text-slate-600">Created <strong>{backupResult.backup_filename}</strong> at {new Date(backupResult.created_at).toLocaleString()}. Documents: {backupResult.documents_backed_up}; versions: {backupResult.versions_backed_up}; integrity verified: {String(backupResult.integrity_verified)}.</div> : <p className="p-6 text-center text-xs text-slate-500">No backup result available in this session.</p>}
         </div>
       </div>
     </div>

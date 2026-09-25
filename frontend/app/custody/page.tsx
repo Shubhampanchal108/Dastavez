@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   GitPullRequest,
@@ -12,8 +12,9 @@ import {
   CheckCircle2,
   Lock,
 } from 'lucide-react';
-import { DocumentStore, useDocuments, useCurrentOfficer } from '@/lib/store';
-import { OFFICER_PRESETS } from '@/lib/mockData';
+import { useDocuments, useCurrentOfficer } from '@/lib/store';
+import { DmsApi } from '@/lib/api';
+import { UserDirectoryItem } from '@/lib/types';
 
 function CustodyContent() {
   const searchParams = useSearchParams();
@@ -21,39 +22,60 @@ function CustodyContent() {
   const documents = useDocuments();
   const officer = useCurrentOfficer();
 
-  const [selectedDocId, setSelectedDocId] = useState<string>(initialId || documents[0]?.id || 'doc-101');
+  const [selectedDocId, setSelectedDocId] = useState<string>(initialId || '');
   const [modalOpen, setModalOpen] = useState(false);
-  const [transferTo, setTransferTo] = useState('Lead Prosecutor Sharma');
-  const [transferBadge, setTransferBadge] = useState('BADGE #9012');
-  const [purpose, setPurpose] = useState('Trial evidence submission before Judicial Magistrate.');
-  const [pin, setPin] = useState('');
+  const [recipients, setRecipients] = useState<UserDirectoryItem[]>([]);
+  const [recipientSearch, setRecipientSearch] = useState('');
+  const [recipientUserId, setRecipientUserId] = useState('');
+  const [reason, setReason] = useState('');
+  const [notes, setNotes] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const activeDoc = documents.find((d) => d.id === selectedDocId) || documents[0];
-  const custodyEvents = DocumentStore.getCustodyEvents(activeDoc?.id);
+  const [custodyEvents, setCustodyEvents] = useState<any[]>([]);
 
-  const handleTransferSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => void DmsApi.listUserDirectory(recipientSearch.trim() || undefined).then((response) => {
+      if (Array.isArray(response.data)) setRecipients(response.data as UserDirectoryItem[]);
+      else setErrorMsg(response.error || 'Unable to load recipient directory.');
+    }), 300);
+    return () => window.clearTimeout(timeoutId);
+  }, [recipientSearch]);
+
+  useEffect(() => {
+    if (!activeDoc) return;
+    void DmsApi.getCustody(activeDoc.id).then((response) => {
+      setCustodyEvents(Array.isArray(response.data) ? response.data : []);
+    });
+  }, [activeDoc]);
+
+  const handleTransferSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!pin) {
-      setErrorMsg('Please enter your 4-digit officer PIN.');
+    if (!recipientUserId || !reason.trim()) {
+      setErrorMsg('Select a recipient and enter a transfer reason.');
       return;
     }
 
-    DocumentStore.addCustodyEvent({
-      docId: activeDoc.id,
-      action: 'Chain of Custody Handover',
-      fromOfficer: officer.name,
-      toOfficer: transferTo,
-      badgeFrom: officer.badgeId,
-      badgeTo: transferBadge,
-      purpose: purpose,
-      status: 'VERIFIED',
+    const response = await DmsApi.transferCustody(activeDoc.id, {
+      to_user_id: recipientUserId,
+      reason: reason.trim(),
+      ...(notes.trim() ? { notes: notes.trim() } : {}),
     });
+    if (!response.data) {
+      setErrorMsg(response.error || `Custody transfer failed (HTTP ${response.status}).`);
+      return;
+    }
+    setCustodyEvents((current) => [response.data, ...current]);
 
     setModalOpen(false);
-    setPin('');
+    setRecipientUserId('');
+    setRecipientSearch('');
+    setReason('');
+    setNotes('');
     setErrorMsg(null);
   };
+
+  if (!activeDoc) return <div className="p-8 text-center text-slate-500">No documents found.</div>;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -122,15 +144,15 @@ function CustodyContent() {
 
                 <div className="flex items-center gap-2 text-xs text-slate-800 font-semibold mb-2">
                   <span className="bg-slate-200 px-2 py-0.5 rounded text-slate-700">
-                    {evt.fromOfficer} ({evt.badgeFrom})
+                    {evt.from_user_id}
                   </span>
                   <ArrowRight className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                   <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
-                    {evt.toOfficer} ({evt.badgeTo})
+                    {evt.to_user_id}
                   </span>
                 </div>
 
-                <p className="text-xs text-slate-600 leading-relaxed">{evt.purpose}</p>
+                <p className="text-xs text-slate-600 leading-relaxed">{evt.reason}</p>
 
                 <div className="mt-3 pt-2 border-t border-slate-200/80 flex justify-between text-[10px] text-slate-400 font-mono">
                   <span>RECORD ID: {evt.id}</span>
@@ -174,25 +196,29 @@ function CustodyContent() {
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Recipient Officer / Authority Name</label>
                 <input
-                  type="text"
-                  required
-                  value={transferTo}
-                  onChange={(e) => setTransferTo(e.target.value)}
+                  type="search"
+                  value={recipientSearch}
+                  onChange={(e) => setRecipientSearch(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-semibold"
-                  placeholder="e.g. Lead Prosecutor Sharma"
+                  placeholder="Search name, email, or role"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Recipient Official Badge ID</label>
-                <input
-                  type="text"
+                <label className="block font-semibold text-slate-700 mb-1">Recipient</label>
+                <select
                   required
-                  value={transferBadge}
-                  onChange={(e) => setTransferBadge(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-mono"
-                  placeholder="e.g. BADGE #9012"
-                />
+                  value={recipientUserId}
+                  onChange={(e) => setRecipientUserId(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900"
+                >
+                  <option value="">Select a recipient</option>
+                  {recipients.map((recipient) => (
+                    <option key={recipient.id} value={recipient.id}>
+                      {recipient.name} ({recipient.email})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -200,22 +226,19 @@ function CustodyContent() {
                 <textarea
                   rows={3}
                   required
-                  value={purpose}
-                  onChange={(e) => setPurpose(e.target.value)}
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Officer 4-Digit Security PIN</label>
-                <input
-                  type="password"
-                  maxLength={4}
-                  required
-                  value={pin}
-                  onChange={(e) => setPin(e.target.value)}
-                  placeholder="••••"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 tracking-widest text-center text-base font-mono"
+                <label className="block font-semibold text-slate-700 mb-1">Notes (optional)</label>
+                <textarea
+                  rows={2}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900"
                 />
               </div>
 

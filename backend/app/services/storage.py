@@ -11,7 +11,11 @@ import cloudinary
 import cloudinary.api
 import cloudinary.uploader
 
-MAX_FILE_SIZE = 20 * 1024 * 1024
+
+load_dotenv()
+
+
+MAX_FILE_SIZE = int(os.getenv("MAX_FILE_SIZE_BYTES", str(20 * 1024 * 1024)))
 ALLOWED_FILES = {
     ".pdf": ("application/pdf", b"%PDF-"),
     ".docx": ("application/vnd.openxmlformats-officedocument.wordprocessingml.document", b"PK"),
@@ -19,11 +23,6 @@ ALLOWED_FILES = {
     ".jpeg": ("image/jpeg", b"\xff\xd8\xff"),
     ".png": ("image/png", b"\x89PNG\r\n\x1a\n"),
 }
-
-
-load_dotenv()
-
-
 def configure_cloudinary() -> None:
     cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME")
     api_key = os.getenv("CLOUDINARY_API_KEY")
@@ -59,7 +58,11 @@ def read_and_hash_upload(file: UploadFile) -> tuple[io.BytesIO, str, int]:
     while chunk := file.file.read(1024 * 1024):
         size += len(chunk)
         if size > MAX_FILE_SIZE:
-            raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="File exceeds the 20 MB limit.")
+            limit_mb = MAX_FILE_SIZE / (1024 * 1024)
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"File exceeds the {limit_mb:g} MB limit.",
+            )
         digest.update(chunk)
         content.write(chunk)
     content.seek(0)

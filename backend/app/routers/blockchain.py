@@ -11,6 +11,7 @@ from app.models.user import User
 from app.schemas.blockchain import BlockchainProofResponse, BlockchainVerifyResponse
 from app.services.blockchain_service import create_proof, verify_proof
 from app.services.audit_service import record_audit_event
+from app.services.resource_authorization import require_document_access
 
 
 router = APIRouter(prefix="/api/documents", tags=["blockchain-integrity"])
@@ -21,6 +22,7 @@ def create_document_blockchain_proof(document_id: uuid.UUID, db: Session = Depen
     document = db.query(Document).options(selectinload(Document.versions)).filter(Document.id == document_id).first()
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found.")
+    require_document_access(db, document, current_user)
     record = create_proof(db, document)
     record_audit_event(db, current_user.id, "BLOCKCHAIN_PROOF_CREATED", "document", document.id, "SUCCESS", {"version_id": str(record.version_id)}, document.id)
     db.commit()
@@ -41,6 +43,7 @@ def verify_document_blockchain_proof(document_id: uuid.UUID, db: Session = Depen
     document = db.query(Document).options(selectinload(Document.versions)).filter(Document.id == document_id).first()
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found.")
+    require_document_access(db, document, current_user)
     result = verify_proof(db, document)
     version = max(document.versions, key=lambda item: item.version_number)
     action = {"VERIFIED": "BLOCKCHAIN_VERIFICATION_SUCCESS", "MISMATCH": "BLOCKCHAIN_VERIFICATION_MISMATCH", "NOT_ANCHORED": "BLOCKCHAIN_NOT_ANCHORED"}.get(result["integrity_status"], "BLOCKCHAIN_VERIFICATION_MISMATCH")
@@ -54,6 +57,7 @@ def create_version_blockchain_proof(document_id: uuid.UUID, version_number: int,
     document = db.query(Document).options(selectinload(Document.versions)).filter(Document.id == document_id).first()
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found.")
+    require_document_access(db, document, current_user)
     version = next((item for item in document.versions if item.version_number == version_number), None)
     if version is None:
         raise HTTPException(status_code=404, detail="Document version not found.")
@@ -68,6 +72,7 @@ def verify_version_blockchain_proof(document_id: uuid.UUID, version_number: int,
     document = db.query(Document).options(selectinload(Document.versions)).filter(Document.id == document_id).first()
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found.")
+    require_document_access(db, document, current_user)
     version = next((item for item in document.versions if item.version_number == version_number), None)
     if version is None:
         raise HTTPException(status_code=404, detail="Document version not found.")
