@@ -133,7 +133,7 @@ export const DocumentStore = {
     documentsError = null;
     notifyListeners();
     try {
-      const res = await DmsApi.listDocuments(20, 0);
+      const res = await DmsApi.listDocuments(100, 0);
       if (res.data && Array.isArray(res.data)) {
         const liveDocs = res.data.map((item: any) => ({
           id: item.id,
@@ -147,22 +147,25 @@ export const DocumentStore = {
           sha256_hash: item.sha256_hash || '',
           status: (item.status || 'PENDING').toUpperCase(),
           created_at: item.created_at,
-          uploader: item.uploaded_by,
-          uploader_role: 'Unknown',
+          uploader: item.uploaded_by || '',
+          uploader_role: 'Officer',
           version: 'v1.0',
           summary: item.description || '',
+          ai_confidence: item.ai_confidence,
+          validation_status: item.validation_status,
         }));
         documentsState = liveDocs;
+        documentsError = null;
         notifyListeners();
       } else {
         documentsState = [];
-        documentsError = 'Unable to load documents.';
+        documentsError = res.error || 'Unable to load documents. Please sign in or check backend.';
         notifyListeners();
       }
-    } catch (e) {
+    } catch (e: any) {
       console.warn('Backend sync failed', e);
       documentsState = [];
-      documentsError = 'Unable to load documents.';
+      documentsError = e?.message || 'Unable to reach backend server.';
       notifyListeners();
     } finally {
       documentsLoading = false;

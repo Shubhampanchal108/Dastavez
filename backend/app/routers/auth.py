@@ -108,19 +108,18 @@ def login_user(request: LoginRequest, db: Session = Depends(get_db)):
     return OTPRequiredResponse(
         status="OTP_REQUIRED",
         challenge_id=challenge.id,
-        message="OTP verification required.",
-        dev_otp=getattr(challenge, "_dev_otp", None) if development_otp_enabled() else None,
+        message="OTP verification required. Open the DMS Mobile Authenticator on your phone to view your OTP.",
+        dev_otp=None,
+        otp=None,
         expires_at=challenge.expires_at,
     )
 
 
 @router.post("/mobile/reveal-otp", response_model=OTPRequiredResponse)
 def reveal_mobile_otp(request: MobileOtpRevealRequest, db: Session = Depends(get_db)):
-    """Development-only bridge: reveal the OTP belonging to the current web login."""
-    if not development_otp_enabled():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found.")
+    """Bridge for the mobile authenticator to reveal the OTP belonging to the current web login after biometric authentication."""
     user = authenticate_user(db, request.email, request.password)
-    now = __import__("datetime").datetime.now(__import__("datetime").timezone.utc)
+    now = datetime.now(timezone.utc)
     challenge = (
         db.query(OTPChallenge)
         .filter(
@@ -133,17 +132,24 @@ def reveal_mobile_otp(request: MobileOtpRevealRequest, db: Session = Depends(get
         .first()
     )
     if challenge is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Start login on the web app first.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No pending web login request found. Please start login on the web app first.",
+        )
 
     otp = otp_delivery.get(challenge.id)
     if otp is None:
-        raise HTTPException(status_code=status.HTTP_410_GONE, detail="OTP is no longer available. Start web login again.")
+        raise HTTPException(
+            status_code=status.HTTP_410_GONE,
+            detail="OTP is no longer available or has expired. Start web login again.",
+        )
 
     return OTPRequiredResponse(
         status="OTP_REQUIRED",
         challenge_id=challenge.id,
         message="OTP unlocked after mobile biometric approval.",
         dev_otp=otp,
+        otp=otp,
         expires_at=challenge.expires_at,
     )
 

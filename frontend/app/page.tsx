@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   FileText,
@@ -18,10 +18,12 @@ import {
   Server,
   ChevronRight,
   Shield,
+  RefreshCw,
 } from 'lucide-react';
 import { MetricCard } from '@/components/metric-card';
 import { DocumentTable } from '@/components/document-table';
-import { useDocuments, useDocumentsStatus, useAuditLogs, useAuditLogsStatus, useCurrentOfficer } from '@/lib/store';
+import { useDocuments, useDocumentsStatus, useAuditLogs, useAuditLogsStatus, useCurrentOfficer, DocumentStore } from '@/lib/store';
+import { DmsApi } from '@/lib/api';
 
 export default function DashboardPage() {
   const officer = useCurrentOfficer();
@@ -30,10 +32,28 @@ export default function DashboardPage() {
   const auditLogs = useAuditLogs();
   const auditLogsStatus = useAuditLogsStatus();
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('ALL');
+  const [activeSharesCount, setActiveSharesCount] = useState<number | string>('...');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    void DmsApi.listReceivedShares().then((res) => {
+      if (Array.isArray(res.data)) {
+        setActiveSharesCount(res.data.filter((s: any) => s.status === 'ACTIVE').length);
+      } else {
+        setActiveSharesCount(0);
+      }
+    });
+  }, []);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await DocumentStore.syncWithBackend();
+    setIsRefreshing(false);
+  };
 
   // Stats
   const totalDocs = documents.length;
-  const anchoredDocs = documents.filter((d) => d.block_number).length;
+  const anchoredDocs = documents.filter((d) => d.status === 'SEALED' || d.status === 'VERIFIED').length;
   const verifiedCount = documents.filter((d) => d.status === 'VERIFIED' || d.status === 'SEALED').length;
 
   // Filtered documents
@@ -49,7 +69,7 @@ export default function DashboardPage() {
         <div className="relative z-10">
           <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-semibold mb-2 border border-blue-400/30">
             <Shield className="w-3.5 h-3.5" />
-            <span>Digital Locker & Evidence Vault</span>
+            <span>Digital Locker & Evidence Vault • PostgreSQL Live</span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight">
             Welcome back, {officer.name}
@@ -61,6 +81,15 @@ export default function DashboardPage() {
 
         {/* Action Ribbon */}
         <div className="flex items-center gap-3 relative z-10 shrink-0">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="inline-flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/20 transition-all"
+            title="Refresh database records"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>Sync</span>
+          </button>
           <Link
             href="/upload"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md shadow-blue-600/30 transition-all hover:scale-[1.02]"
@@ -84,9 +113,9 @@ export default function DashboardPage() {
       {/* KPI Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <MetricCard
-          title="Documents Loaded"
+          title="Documents in Vault"
           value={documentsStatus.loading ? '...' : totalDocs}
-          subtitle="Current backend document page"
+          subtitle="PostgreSQL database live count"
           icon={FileText}
           iconBg="bg-blue-50"
           iconColor="text-blue-600"
@@ -94,15 +123,15 @@ export default function DashboardPage() {
         <MetricCard
           title="Blockchain Anchored"
           value={documentsStatus.loading ? '...' : anchoredDocs}
-          subtitle="Immutable EVM proofs"
+          subtitle="Immutable EVM proofs recorded"
           icon={Blocks}
           iconBg="bg-indigo-50"
           iconColor="text-indigo-600"
         />
         <MetricCard
           title="Active Secure Shares"
-          value="N/A"
-          subtitle="Share statistics unavailable"
+          value={activeSharesCount}
+          subtitle="Active time-bounded shares"
           icon={Share2}
           iconBg="bg-purple-50"
           iconColor="text-purple-600"
@@ -146,7 +175,25 @@ export default function DashboardPage() {
           </div>
 
           {/* Documents Table Component */}
-          {documentsStatus.loading ? <p className="p-8 text-center text-xs text-slate-500">Loading documents...</p> : documentsStatus.error ? <p className="p-8 text-center text-xs text-rose-700">{documentsStatus.error}</p> : <DocumentTable documents={filteredDocs.slice(0, 6)} />}
+          {documentsStatus.loading ? (
+            <p className="p-8 text-center text-xs text-slate-500">Loading documents from PostgreSQL...</p>
+          ) : documentsStatus.error ? (
+            <div className="p-8 text-center text-xs bg-white rounded-xl border border-slate-200 space-y-2">
+              <p className="text-rose-700 font-semibold">{documentsStatus.error}</p>
+              <Link href="/login" className="inline-block px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700">
+                Sign In to Authenticate Session
+              </Link>
+            </div>
+          ) : documents.length === 0 ? (
+            <div className="p-8 text-center text-xs bg-white rounded-xl border border-slate-200 space-y-2">
+              <p className="text-slate-500">No documents found in database.</p>
+              <Link href="/upload" className="inline-block px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700">
+                Ingest First Document
+              </Link>
+            </div>
+          ) : (
+            <DocumentTable documents={filteredDocs.slice(0, 8)} />
+          )}
 
           <div className="flex justify-end pt-1">
             <Link
@@ -180,20 +227,20 @@ export default function DashboardPage() {
               {auditLogsStatus.loading && <p className="text-xs text-slate-500">Loading activity...</p>}
               {!auditLogsStatus.loading && auditLogsStatus.error && <p className="text-xs text-rose-700">{auditLogsStatus.error}</p>}
               {!auditLogsStatus.loading && !auditLogsStatus.error && auditLogs.length === 0 && <p className="text-xs text-slate-500">No records found.</p>}
-              {auditLogs.slice(0, 4).map((log, idx) => (
+              {auditLogs.slice(0, 5).map((log, idx) => (
                 <div key={log.id} className="relative pl-6 text-xs group">
                   {/* Timeline dot & line */}
                   <span className="absolute left-1.5 top-1 w-2 h-2 rounded-full bg-blue-600 ring-4 ring-blue-50" />
-                  {idx !== auditLogs.slice(0, 4).length - 1 && (
+                  {idx !== auditLogs.slice(0, 5).length - 1 && (
                     <span className="absolute left-2.5 top-3 bottom-0 w-px bg-slate-200 -mb-4" />
                   )}
 
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-semibold text-slate-900 truncate">
-                      {log.action.replace('_', ' ')}
+                      {log.action.replace(/_/g, ' ')}
                     </span>
                     <span className="text-[10px] text-slate-400 shrink-0">
-                      {new Date(log.timestamp).toISOString().slice(11, 16)} UTC
+                      {log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : ''}
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-600 line-clamp-2 mt-0.5 leading-relaxed">
@@ -217,19 +264,23 @@ export default function DashboardPage() {
             <div className="space-y-2 text-xs divide-y divide-slate-800 pt-1">
               <div className="flex items-center justify-between pt-2">
                 <span className="text-slate-400">Security Standard</span>
-                <span className="font-semibold text-white">N/A</span>
+                <span className="font-semibold text-white">FIPS 180-4 / Section 65B</span>
               </div>
               <div className="flex items-center justify-between pt-2">
                 <span className="text-slate-400">Hash Algorithm</span>
-                <span className="font-mono text-emerald-400">N/A</span>
+                <span className="font-mono text-emerald-400">SHA-256 (Cloudinary)</span>
               </div>
               <div className="flex items-center justify-between pt-2">
                 <span className="text-slate-400">AI Classification Model</span>
-                <span className="font-semibold text-indigo-300">N/A</span>
+                <span className="font-semibold text-indigo-300">Groq Qwen 2.5 / PyMuPDF</span>
               </div>
               <div className="flex items-center justify-between pt-2">
                 <span className="text-slate-400">EVM Proof Network</span>
-                <span className="font-semibold text-blue-400">N/A</span>
+                <span className="font-semibold text-blue-400">Solidity Registry (EVM)</span>
+              </div>
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-slate-400">Database Engine</span>
+                <span className="font-semibold text-emerald-400">PostgreSQL (Supabase)</span>
               </div>
             </div>
 

@@ -1,58 +1,168 @@
-# DMS
+# DMS — Secure Intelligent Document Management System
 
-A full-stack document-management system for controlled upload, classification,
-validation, integrity checks, secure sharing, custody history, blockchain
-proofs, and backup verification.
+> A secure, intelligent, and auditable platform for managing sensitive documents from upload to archival.
 
-## Security first
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-modern-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14%2B-4169E1?logo=postgresql)](https://www.postgresql.org/)
+[![Flutter](https://img.shields.io/badge/Flutter-authenticator-02569B?logo=flutter)](https://flutter.dev/)
+[![License](https://img.shields.io/badge/license-private-lightgrey)](#)
 
-Never commit `backend/.env`, database passwords, Cloudinary credentials, JWT
-secrets, wallet private keys, RPC credentials, uploaded files, or generated
-backup/storage data. Use `backend/.env.example` as the configuration template.
+## Overview
 
-Web authentication currently stores the access token and user session state in
-browser `localStorage`. Production hardening may migrate this to HttpOnly,
-Secure, SameSite cookies in a future coordinated authentication change. Backend
-RBAC remains authoritative.
+DMS is a full-stack document management system designed for organizations that
+need more than basic file storage. It combines structured document workflows,
+AI-assisted classification, OCR, metadata validation, chain-of-custody tracking,
+secure sharing, tamper-evident integrity proofs, and verifiable backups in one
+system.
 
-## Architecture
+The platform is built with a security-first mindset: the backend remains the
+authoritative layer for authentication and role-based access control, while
+every important document operation can be traced through audit and custody
+events.
+
+## The Problem
+
+Sensitive documents are often spread across shared drives, email threads, and
+unstructured folders. This creates several operational and security challenges:
+
+- Finding the right document quickly is difficult when files are poorly classified.
+- Missing or inconsistent metadata can make documents hard to trust or process.
+- Duplicate files and uncontrolled versions create uncertainty about which copy is current.
+- Traditional file sharing makes access revocation and accountability difficult.
+- It is hard to prove whether a document has changed after it was uploaded.
+- Backup processes are often disconnected from restore verification.
+- Password-only authentication is not sufficient for high-value document workflows.
+
+## The Solution
+
+DMS provides a controlled lifecycle for every document:
+
+1. **Authenticate securely** with password and OTP or a registered mobile authenticator.
+2. **Upload with context** using case information and document metadata.
+3. **Extract and understand content** through PDF text extraction, OCR, and AI classification.
+4. **Validate quality** by checking required fields and metadata consistency.
+5. **Track every version** with hashes, custody events, and audit records.
+6. **Share safely** with controlled access that can be created, reviewed, and revoked.
+7. **Verify integrity** by comparing document hashes with previously anchored blockchain proofs.
+8. **Protect recoverability** through backup creation and non-destructive restore testing.
+
+## Key Capabilities
+
+| Capability | What it provides |
+| --- | --- |
+| Authentication | Password, OTP, and device-bound mobile approval |
+| Document management | Controlled upload, search, inspection, version history, and metadata |
+| Intelligent processing | PDF extraction, OCR, and configurable Groq-powered classification |
+| Data quality | Required-field validation and metadata consistency checks |
+| Integrity | SHA-256 duplicate detection and optional blockchain hash anchoring |
+| Collaboration | Secure document shares with access and revocation controls |
+| Accountability | Audit logs and chain-of-custody history |
+| Resilience | Backup creation and restore verification workflows |
+
+## Approach
+
+### 1. Layered architecture
+
+The project separates responsibilities across focused clients, APIs, services,
+and persistence:
 
 ```text
-frontend/  Next.js + React + TypeScript web UI
-backend/   FastAPI API, SQLAlchemy models, PostgreSQL integration
-mobile/    Flutter authenticator application
-backend/app/routers/     Auth, documents, AI, sharing, custody, blockchain, backups, audit
-backend/app/services/    Storage, extraction, classification, validation, integrity, backup services
-backend/app/models/      SQLAlchemy database models
-backend/app/schemas/     Pydantic request/response contracts
-backend/blockchain/      Solidity registry and deployment artifacts
+Web browser ────────┐
+                    ├── Next.js frontend ──┐
+Mobile authenticator┘                       │
+                                            ├── FastAPI backend
+PostgreSQL ◄────────────────────────────────┤
+Cloudinary / Supabase Storage ◄─────────────┤
+AI provider / OCR ◄─────────────────────────┤
+Blockchain network ◄────────────────────────┘
 ```
 
-## Implemented workflow
+### 2. Backend-authoritative security
 
-1. Authenticate with password plus OTP or the registered authenticator flow.
-2. Upload a document with case metadata.
-3. Store document files in Cloudinary and calculate SHA-256 hashes.
-4. Extract PDF text/OCR and classify documents through the configured Groq provider.
-5. Validate required fields and metadata consistency.
-6. Search, list, and inspect document details.
-7. Detect exact duplicates using SHA-256.
-8. View document versions and chain-of-custody events.
-9. Create and verify blockchain integrity proofs when blockchain infrastructure is configured.
-10. Create, access, and revoke secure shares.
-11. Create backups and run non-destructive restore verification.
-12. Record audit events through the backend.
+Authentication, authorization, validation, and document access decisions are
+enforced by the backend. The frontend and mobile application provide user
+experiences, but they do not replace server-side access control.
 
-## Requirements
+### 3. Evidence-driven document handling
+
+Documents are represented by cryptographic hashes, versions, custody events,
+and audit events. This creates a traceable record of what happened to a
+document instead of treating it as an anonymous file.
+
+### 4. Configurable integrations
+
+External services are configured through environment variables so development
+and production environments can use appropriate storage, AI, email, and
+blockchain providers without hard-coding credentials or infrastructure details.
+
+## Technology Stack
+
+### Frontend
+
+- **Next.js 16** with the App Router
+- **React 19**
+- **TypeScript**
+- **Tailwind CSS 4**
+- **Lucide React** for interface icons
+
+### Backend
+
+- **Python 3.11+**
+- **FastAPI** and **Uvicorn**
+- **SQLAlchemy** for database access
+- **Alembic** for versioned schema migrations
+- **Pydantic** request and response contracts
+- **PyJWT** and **pwdlib/Argon2** for authentication support
+
+### Data, storage, and processing
+
+- **PostgreSQL 14+** for application data
+- **Cloudinary** for document storage
+- **PyMuPDF**, **Pillow**, and **Tesseract** for extraction and OCR
+- **Groq** as the configured AI provider for classification
+- **Supabase Storage** as the production backup option
+
+### Security and integrity
+
+- SHA-256 document hashing
+- OTP and mobile authenticator approval
+- EVM-compatible blockchain integration through **Web3.py**
+- Solidity registry contracts with **py-solc-x**
+- Audit logs and chain-of-custody records
+
+### Mobile
+
+- **Flutter**
+- Device-bound cryptographic keys
+- Biometric approval for authenticator challenges
+
+## Project Structure
+
+```text
+.
+├── frontend/                 # Next.js web application
+├── backend/                  # FastAPI API and domain services
+│   ├── app/routers/          # Auth, documents, sharing, custody, audit, and more
+│   ├── app/services/         # Storage, extraction, classification, backup, and integrity
+│   ├── app/models/           # SQLAlchemy database models
+│   ├── app/schemas/          # Pydantic API contracts
+│   └── blockchain/            # Solidity registry and deployment artifacts
+└── mobile/                   # Flutter authenticator application
+```
+
+## Getting Started
+
+### Prerequisites
 
 - Windows PowerShell or an equivalent shell
 - Python 3.11+
 - Node.js 20+
 - PostgreSQL 14+
 - Flutter SDK with Dart 3.11+
-- Optional integrations: Cloudinary, Supabase Storage for production backups, and an EVM node or external permissioned network
+- Optional: Cloudinary, Groq, Supabase Storage, email provider, and an EVM-compatible network
 
-## Backend setup
+### 1. Configure and run the backend
 
 ```powershell
 Set-Location backend
@@ -62,119 +172,127 @@ pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
-Set local values in `.env`, then apply the database migrations:
+Set the local values in `backend/.env`, then apply migrations and start the API:
 
 ```powershell
 alembic upgrade head
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-The backend uses PostgreSQL through SQLAlchemy. Database schema creation and
-changes are managed by Alembic; `app/init_db.py` is retained only for legacy
-data repair and version backfilling.
+The backend is available at:
 
-Backend URLs for local development:
+- API: <http://127.0.0.1:8000>
+- Swagger UI: <http://127.0.0.1:8000/docs>
+- Health check: <http://127.0.0.1:8000/health>
+- Database health check: <http://127.0.0.1:8000/health/db>
 
-- API: http://127.0.0.1:8000
-- Swagger UI: http://127.0.0.1:8000/docs
-- Health: http://127.0.0.1:8000/health
-- Database health: http://127.0.0.1:8000/health/db
+### 2. Configure and run the frontend
 
-## Frontend setup
+In a second terminal:
 
 ```powershell
 Set-Location frontend
 npm install
+$env:NEXT_PUBLIC_API_BASE_URL = "http://localhost:8000"
 npm run dev
 ```
 
-The frontend is a Next.js application. During development, the API base URL
-may use the local backend example:
+Open <http://localhost:3000> in your browser.
 
-```text
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
-```
-
-For a production build, `NEXT_PUBLIC_API_BASE_URL` must be explicitly set to
-the deployed HTTPS backend URL. This README intentionally does not provide a
-specific production URL.
-
-Useful commands:
+Useful frontend commands:
 
 ```powershell
-npm run build
 npm run lint
+npm run build
 npm start
 ```
 
-## Mobile authenticator setup
-
-The mobile application is built with Flutter. From the `mobile` directory:
+### 3. Run the mobile authenticator
 
 ```powershell
+Set-Location mobile
 flutter pub get
 flutter analyze
 flutter run
 ```
 
-The authenticator uses device-bound cryptographic keys and biometric approval.
-It acts as the approver for website login challenges and does not receive the
-website JWT during the approval flow.
+The mobile app approves website login challenges using device-bound keys and
+biometrics. It does not receive the website JWT during the approval flow.
 
-## API modules
+## API Areas
 
-| Area | Main routes |
+| Area | Example routes |
 | --- | --- |
 | Authentication | `/api/auth/login`, `/api/auth/verify-otp`, `/api/auth/me` |
 | Documents | `/api/documents`, `/api/documents/upload`, `/api/documents/search` |
-| Required fields | `POST /api/documents/{document_id}/validate-required-fields` |
-| Metadata consistency | `POST /api/documents/{document_id}/validate-consistency` |
-| Exact duplicates | `GET /api/documents/{document_id}/duplicates` |
+| Validation | `/api/documents/{document_id}/validate-required-fields` |
+| Consistency | `/api/documents/{document_id}/validate-consistency` |
 | Versions | `/api/documents/{document_id}/versions` |
 | Sharing | `/api/documents/{document_id}/shares`, `/api/shares/{share_id}` |
-| Custody | `GET /api/documents/{document_id}/custody` |
-| Blockchain | `GET /api/documents/{document_id}/blockchain-verify` |
-| Backup | `POST /api/backups/create`, `POST /api/backups/restore-test` |
-| Audit | `GET /api/audit-logs` |
+| Custody | `/api/documents/{document_id}/custody` |
+| Blockchain | `/api/documents/{document_id}/blockchain-verify` |
+| Backups | `/api/backups/create`, `/api/backups/restore-test` |
+| Audit | `/api/audit-logs` |
 
-See Swagger at `/docs` for the generated API contract. Production deployments
-should decide separately whether the public documentation endpoints should be
-restricted.
+The generated API contract is available through Swagger at `/docs`.
 
-## Configuration
+## Security Notes
 
-Copy `backend/.env.example` to `backend/.env` and replace placeholders without
-committing the resulting file.
+Never commit any of the following:
 
-- **Database:** PostgreSQL connection settings, with schema changes applied through Alembic.
-- **Document storage:** Cloudinary credentials are required for document upload and retrieval.
-- **AI:** Groq is the configured provider. Set the provider, model, base URL, timeout, and `GROQ_API_KEY` in the backend environment; never put the key in source control.
-- **Backups:** Development can use `BACKUP_STORAGE=local`. Production should use `BACKUP_STORAGE=supabase` with a private bucket and backend-only Supabase service-role credentials. This repository does not claim that external backup storage is already configured.
-- **Blockchain:** Configuration is environment-based. Local development may use `BLOCKCHAIN_PROVIDER=ganache`. Production requires `BLOCKCHAIN_PROVIDER=external`, an approved external or permissioned network, chain ID, deployed contract address, and backend-only signing credentials. This project does not claim that a production network or contract is deployed.
-- **Web frontend:** Production requires `NEXT_PUBLIC_API_BASE_URL` pointing to the deployed HTTPS backend.
+- `backend/.env`, passwords, JWT secrets, API keys, or private keys
+- Uploaded documents, generated backups, or local storage data
+- Cloudinary, Supabase, email, AI, RPC, or database credentials
 
-Do not expose database passwords, JWT secrets, Cloudinary secrets, Groq keys,
-Supabase service-role keys, RPC credentials, or blockchain private keys.
+Use `backend/.env.example` as the configuration template. Backend RBAC remains
+authoritative. The current web client stores its access token and session state
+in browser `localStorage`; production hardening may migrate this to
+HttpOnly, Secure, SameSite cookies in a coordinated authentication change.
 
-## Data and generated files
+Blockchain verification confirms whether the current document hash matches a
+previously anchored hash. It does not independently prove authenticity,
+authorship, possession, or legal validity.
 
-These are local/runtime artifacts and must stay outside Git:
+## Validation Checklist
 
-- `backend/.env`
-- `backend/.venv/`
-- `backend/storage/`
-- `backend/backups/`
-- `backend/restore-tests/`
-- Python caches and frontend build output
+Before sharing changes, run the checks relevant to the component you changed:
 
-## Validation
+```powershell
+# Backend
+Set-Location backend
+pytest
 
-Run the backend tests from `backend` and validate the frontend with TypeScript,
-lint, and a production build before sharing changes. Run `flutter analyze` for
-the mobile application. Use `/health` and `/health/db` for local backend health
-checks. These checks do not establish that external production services are
-deployed or configured.
+# Frontend
+Set-Location ..\frontend
+npm run lint
+npm run build
 
-Before publishing a private repository, review `git status` and
-`git diff --cached`. Confirm that environment files, credentials, uploaded
-files, storage data, and backups are not staged.
+# Mobile
+Set-Location ..\mobile
+flutter analyze
+```
+
+Also verify `/health` and `/health/db`, review `git status`, and confirm that
+credentials, uploads, backups, and environment files are not staged.
+
+## Contributors
+
+This project is built by:
+
+| Contributor | Role | Profile |
+| --- | --- | --- |
+| **[Contributor 1 Name]** | [Role or contribution] | [GitHub profile URL] |
+| **[Contributor 2 Name]** | [Role or contribution] | [GitHub profile URL] |
+
+Replace the placeholders above with the contributors' names, roles, and
+profiles before publishing the project.
+
+## Project Status
+
+DMS is an actively developed project. Integrations such as production backup
+storage, AI services, email delivery, and blockchain infrastructure must be
+configured separately for each deployment environment.
+
+---
+
+Built with care for secure, traceable, and intelligent document workflows.

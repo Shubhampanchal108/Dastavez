@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'auth_api.dart';
 import 'secure_authenticator.dart';
@@ -43,47 +44,109 @@ class _LoginPageState extends State<LoginPage> {
   final authenticator = SecureAuthenticator();
 
   String? challengeId;
-  String? devOtp;
+  String? revealedOtp;
   String? status;
   String? accessToken;
 
   bool loading = false;
   bool otpUnlocked = false;
+  bool rememberMe = true;
+  bool obscurePassword = true;
+
   Timer? pollTimer;
+  Timer? otpCountdownTimer;
+  int remainingSeconds = 300;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    try {
+      final creds = await authenticator.getSavedCredentials();
+      if (creds['email'] != null && creds['email']!.isNotEmpty) {
+        if (mounted) {
+          setState(() {
+            emailController.text = creds['email']!;
+            if (creds['password'] != null) {
+              passwordController.text = creds['password']!;
+            }
+            rememberMe = true;
+          });
+        }
+      }
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
     pollTimer?.cancel();
+    otpCountdownTimer?.cancel();
     emailController.dispose();
     passwordController.dispose();
     super.dispose();
   }
 
   Future<void> login() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      showError('Please enter your Officer Email and Password first.');
+      return;
+    }
+
     setState(() {
       loading = true;
       status = null;
       challengeId = null;
-      devOtp = null;
+      revealedOtp = null;
       otpUnlocked = false;
     });
 
     try {
-      final authenticated = await authenticator.authenticateBiometric();
+      final authenticated = await authenticator.authenticateBiometric(
+        reason: 'Verify your fingerprint biometric to access your login OTP',
+      );
       if (!authenticated) {
-        throw Exception('Biometric authentication failed');
+        throw Exception('Biometric authentication failed. Fingerprint was not recognized.');
       }
 
-      final response = await api.revealWebOtp(
-        emailController.text.trim(),
-        passwordController.text,
-      );
+      final response = await api.revealWebOtp(email, password);
 
-      challengeId = response['challenge_id'] as String;
-      devOtp = response['dev_otp'] as String?;
+      if (rememberMe) {
+        await authenticator.saveCredentials(email, password);
+      }
+
+      challengeId = response['challenge_id'] as String?;
+      revealedOtp = (response['otp'] ?? response['dev_otp']) as String?;
       status = 'OTP_REQUIRED';
       otpUnlocked = true;
-      showSuccess('Biometric approved. Web OTP is now shown.');
+      remainingSeconds = 300;
+
+      otpCountdownTimer?.cancel();
+      otpCountdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+        if (remainingSeconds > 0) {
+          setState(() {
+            remainingSeconds--;
+          });
+        } else {
+          timer.cancel();
+          setState(() {
+            otpUnlocked = false;
+            revealedOtp = null;
+          });
+          showError('OTP expired. Start login again on the web app.');
+        }
+      });
+
+      showSuccess('Biometric verified! 6-digit OTP unlocked.');
     } catch (error) {
       showError(_friendlyError(error));
     } finally {
@@ -95,7 +158,90 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // Replace approveAuthenticatorLogin() in main.dart with this version.
+  void _copyOtpToClipboard() {
+    if (revealedOtp != null) {
+      Clipboard.setData(ClipboardData(text: revealedOtp!));
+      showSuccess('OTP $revealedOtp copied to clipboard!');
+    }
+  }
+
+  void _lockOtp() {
+    otpCountdownTimer?.cancel();
+    setState(() {
+      otpUnlocked = false;
+      revealedOtp = null;
+      status = null;
+    });
+    showSuccess('OTP securely locked.');
+  }
+
+  void _showServerConfigDialog() {
+    final serverController = TextEditingController(text: api.currentBaseUrl);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF0B192C),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xFF1E334F)),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.dns_outlined, color: Color(0xFF246BFE), size: 20),
+            SizedBox(width: 8),
+            Text(
+              'Server Endpoint',
+              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Configure the FastAPI backend address (use your PC Wi-Fi IP if running on physical device):',
+              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: serverController,
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+              decoration: InputDecoration(
+                hintText: 'http://10.0.2.2:8000',
+                hintStyle: const TextStyle(color: Color(0xFF64748B)),
+                filled: true,
+                fillColor: const Color(0xFF101B31),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: Color(0xFF334155)),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: Color(0xFF94A3B8))),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF246BFE)),
+            onPressed: () {
+              final newUrl = serverController.text.trim();
+              if (newUrl.isNotEmpty) {
+                api.updateBaseUrl(newUrl);
+                Navigator.pop(ctx);
+                showSuccess('Server updated to $newUrl');
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> approveAuthenticatorLogin() async {
     if (challengeId == null) {
       throw Exception('No authenticator challenge found');
@@ -303,7 +449,7 @@ class _LoginPageState extends State<LoginPage> {
   String _friendlyError(Object error) {
     final message = error.toString().replaceFirst('Exception: ', '');
     if (message.contains('ClientException') || message.contains('Connection')) {
-      return 'Cannot reach DMS server at ${AuthApi.baseUrl}. Connect the phone and computer to the same Wi-Fi network.';
+      return 'Cannot reach DMS server at ${api.currentBaseUrl}. Connect phone and PC to the same Wi-Fi, or check server settings (top right).';
     }
     return message;
   }
@@ -384,39 +530,44 @@ class _LoginPageState extends State<LoginPage> {
                               ],
                             ),
                           ),
+                          IconButton(
+                            icon: const Icon(Icons.settings_outlined, color: muted, size: 20),
+                            tooltip: 'Server Settings',
+                            onPressed: _showServerConfigDialog,
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 28),
                       const Text(
-                        'MOBILE AUTHENTICATOR',
+                        'BIOMETRIC AUTHENTICATOR',
                         style: TextStyle(
                           color: muted,
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1.2,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
-                        otpRequired ? 'Web login approved' : 'Secure sign-in',
+                        otpRequired && otpUnlocked ? 'Biometric Verified' : 'Officer Verification',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 24,
+                          fontSize: 22,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        otpRequired
-                            ? 'Your one-time code is ready. Enter it on the DMS web terminal.'
-                            : 'Use your DMS credentials and biometric verification to unlock a web login code.',
+                        otpRequired && otpUnlocked
+                            ? 'Your official 6-digit OTP is unlocked. Enter it on the web terminal.'
+                            : 'Scan your fingerprint biometric to generate and reveal your web login OTP.',
                         style: const TextStyle(
                           color: muted,
                           fontSize: 13,
                           height: 1.45,
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 22),
                       _inputLabel('Official Email / Badge Identifier'),
                       const SizedBox(height: 8),
                       _inputField(
@@ -426,17 +577,54 @@ class _LoginPageState extends State<LoginPage> {
                         keyboardType: TextInputType.emailAddress,
                         background: field,
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 16),
                       _inputLabel('Password'),
                       const SizedBox(height: 8),
                       _inputField(
                         controller: passwordController,
-                        hint: 'Enter password',
+                        hint: 'Enter officer password',
                         icon: Icons.lock_outline,
-                        obscureText: true,
+                        obscureText: obscurePassword,
                         background: field,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                            color: muted,
+                            size: 18,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              obscurePassword = !obscurePassword;
+                            });
+                          },
+                        ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: Checkbox(
+                              value: rememberMe,
+                              activeColor: blue,
+                              checkColor: Colors.white,
+                              side: const BorderSide(color: Color(0xFF334155)),
+                              onChanged: (val) {
+                                setState(() {
+                                  rememberMe = val ?? false;
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Remember officer on this device',
+                            style: TextStyle(color: muted, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
                       FilledButton.icon(
                         onPressed: loading ? null : login,
                         icon: loading
@@ -448,9 +636,11 @@ class _LoginPageState extends State<LoginPage> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Icon(Icons.fingerprint),
+                            : const Icon(Icons.fingerprint, size: 22),
                         label: Text(
-                          loading ? 'Verifying...' : 'Verify with biometrics',
+                          loading
+                              ? 'Verifying Biometrics...'
+                              : (otpUnlocked ? 'Re-scan Fingerprint' : 'Verify with Fingerprint'),
                         ),
                         style: FilledButton.styleFrom(
                           backgroundColor: blue,
@@ -461,56 +651,133 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           textStyle: const TextStyle(
                             fontWeight: FontWeight.w800,
+                            fontSize: 14,
                           ),
                         ),
                       ),
-                      if (otpRequired && otpUnlocked && devOtp != null) ...[
+                      if (otpRequired && otpUnlocked && revealedOtp != null) ...[
                         const SizedBox(height: 24),
                         Container(
-                          padding: const EdgeInsets.all(18),
+                          padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF102B55),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: const Color(0xFF2E6FEF)),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF0D2547), Color(0xFF0F3263)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFF2E6FEF), width: 1.5),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x332E6FEF),
+                                blurRadius: 20,
+                                offset: Offset(0, 8),
+                              ),
+                            ],
                           ),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              const Row(
+                              Row(
                                 children: [
-                                  Icon(
-                                    Icons.verified_user_outlined,
-                                    color: Color(0xFF72A2FF),
-                                    size: 18,
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF104A9E),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(
+                                      Icons.fingerprint,
+                                      color: Color(0xFF8DB4FF),
+                                      size: 18,
+                                    ),
                                   ),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'WEB LOGIN OTP',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 1.1,
+                                  const SizedBox(width: 10),
+                                  const Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'BIOMETRIC VERIFIED',
+                                          style: TextStyle(
+                                            color: Color(0xFF68D391),
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w900,
+                                            letterSpacing: 1.2,
+                                          ),
+                                        ),
+                                        Text(
+                                          'OFFICIAL LOGIN OTP TOKEN',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: 0.8,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.lock_outline, color: Color(0xFF94A3B8), size: 20),
+                                    tooltip: 'Lock OTP',
+                                    onPressed: _lockOtp,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Container(
+                                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF081528),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: const Color(0xFF1E3A60)),
+                                ),
+                                child: Center(
+                                  child: SelectableText(
+                                    revealedOtp!,
+                                    style: const TextStyle(
+                                      color: Color(0xFFE2E8F0),
+                                      fontSize: 36,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 9,
+                                      fontFamily: 'monospace',
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'Valid for: ${remainingSeconds ~/ 60}:${(remainingSeconds % 60).toString().padLeft(2, '0')}',
+                                      style: const TextStyle(
+                                        color: Color(0xFFFBD38D),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  TextButton.icon(
+                                    onPressed: _copyOtpToClipboard,
+                                    icon: const Icon(Icons.copy, size: 16, color: Color(0xFF72A2FF)),
+                                    label: const Text(
+                                      'Copy Code',
+                                      style: TextStyle(
+                                        color: Color(0xFF72A2FF),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
-                              Center(
-                                child: SelectableText(
-                                  devOtp!,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 34,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 8,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 6),
                               const Text(
-                                'Read-only code. Enter it on the DMS web terminal.',
-                                style: TextStyle(color: muted, fontSize: 12),
+                                'Enter this 6-digit OTP into your DMS web terminal to complete login.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
                               ),
                             ],
                           ),
@@ -533,7 +800,7 @@ class _LoginPageState extends State<LoginPage> {
                       const Divider(color: Color(0xFF1E334F)),
                       const SizedBox(height: 12),
                       const Text(
-                        'DMS Evidence Vault  •  Authenticator 2026.4',
+                        'DMS Evidence Vault  •  Biometric Authenticator',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Color(0xFF64748B),
@@ -569,6 +836,7 @@ class _LoginPageState extends State<LoginPage> {
     required Color background,
     TextInputType? keyboardType,
     bool obscureText = false,
+    Widget? suffixIcon,
   }) {
     return TextField(
       controller: controller,
@@ -579,6 +847,7 @@ class _LoginPageState extends State<LoginPage> {
         hintText: hint,
         hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
         prefixIcon: Icon(icon, color: const Color(0xFF64748B), size: 20),
+        suffixIcon: suffixIcon,
         filled: true,
         fillColor: background,
         contentPadding: const EdgeInsets.symmetric(

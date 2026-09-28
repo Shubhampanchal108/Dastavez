@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Bell,
@@ -9,7 +9,12 @@ import {
   ShieldAlert,
   Sparkles,
   Fingerprint,
+  RefreshCw,
+  Clock,
 } from 'lucide-react';
+import { useAuditLogs } from '@/lib/store';
+import { DmsApi } from '@/lib/api';
+
 interface NotificationItem {
   id: string;
   title: string;
@@ -21,8 +26,44 @@ interface NotificationItem {
 }
 
 export default function NotificationsPage() {
-  const notifications: NotificationItem[] = [];
+  const auditLogs = useAuditLogs();
   const [filter, setFilter] = useState('ALL');
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (auditLogs && auditLogs.length > 0) {
+      const derived: NotificationItem[] = auditLogs.map((log) => {
+        let category: NotificationItem['category'] = 'SECURITY';
+        let title = log.action.replace(/_/g, ' ');
+
+        if (log.action.includes('SHARE')) {
+          category = 'SHARE';
+          title = 'Document Share Event';
+        } else if (log.action.includes('BLOCKCHAIN')) {
+          category = 'BLOCKCHAIN';
+          title = 'Blockchain Ledger Anchor';
+        } else if (log.action.includes('VALIDAT') || log.action.includes('AI')) {
+          category = 'VALIDATION';
+          title = 'Compliance & AI Classification';
+        } else if (log.action.includes('INTEGRITY') || log.action.includes('HASH')) {
+          category = 'INTEGRITY';
+          title = 'Cryptographic Integrity Check';
+        }
+
+        return {
+          id: log.id,
+          title,
+          description: log.details || `${log.action} performed by ${log.actor}`,
+          timestamp: new Date(log.timestamp).toLocaleString(),
+          category,
+          isRead: false,
+          docId: log.reference,
+        };
+      });
+      setNotifications(derived);
+    }
+  }, [auditLogs]);
 
   const filtered = filter === 'ALL'
     ? notifications
@@ -55,15 +96,14 @@ export default function NotificationsPage() {
             <h1 className="text-xl font-bold text-slate-900">Notifications Center</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            System notices, document shares, blockchain confirmations, and integrity alerts.
+            Real-time notifications synchronized with institutional PostgreSQL audit logs.
           </p>
         </div>
-
       </div>
 
       {/* Filter Tabs */}
       <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 text-xs font-semibold overflow-x-auto shadow-2xs">
-        {['ALL', 'UNREAD', 'SHARE', 'BLOCKCHAIN', 'VALIDATION', 'SECURITY'].map((f) => (
+        {['ALL', 'SHARE', 'BLOCKCHAIN', 'VALIDATION', 'SECURITY'].map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -80,13 +120,15 @@ export default function NotificationsPage() {
 
       {/* Notifications List */}
       <div className="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100 overflow-hidden shadow-xs">
-        {filtered.length === 0 && <p className="p-6 text-center text-xs text-slate-500">No notifications found.</p>}
+        {filtered.length === 0 && (
+          <p className="p-8 text-center text-xs text-slate-500">
+            No notifications found in this category.
+          </p>
+        )}
         {filtered.map((item) => (
           <div
             key={item.id}
-            className={`p-4 flex items-start gap-3.5 transition-colors ${
-              !item.isRead ? 'bg-blue-50/40' : 'hover:bg-slate-50'
-            }`}
+            className="p-4 flex items-start gap-3.5 transition-colors hover:bg-slate-50/80"
           >
             <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200/80">
               {getCategoryIcon(item.category)}
@@ -95,23 +137,20 @@ export default function NotificationsPage() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2 mb-0.5">
                 <h3 className="text-xs font-bold text-slate-900">{item.title}</h3>
-                <span className="text-[10px] text-slate-400 shrink-0">{item.timestamp}</span>
+                <span className="text-[10px] text-slate-400 shrink-0 font-mono">{item.timestamp}</span>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">{item.description}</p>
-
               {item.docId && (
-                <Link
-                  href={`/documents/${item.docId}`}
-                  className="mt-2 inline-block text-[11px] font-semibold text-blue-600 hover:underline"
-                >
-                  Inspect Case Document →
-                </Link>
+                <div className="mt-1.5">
+                  <Link
+                    href={`/documents/${item.docId}`}
+                    className="text-[11px] font-mono text-blue-600 hover:underline"
+                  >
+                    View Document {item.docId.slice(0, 8)}...
+                  </Link>
+                </div>
               )}
             </div>
-
-            {!item.isRead && (
-              <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0 mt-1.5" />
-            )}
           </div>
         ))}
       </div>

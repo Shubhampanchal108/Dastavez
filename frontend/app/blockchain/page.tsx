@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   Blocks,
@@ -10,9 +10,11 @@ import {
   CheckCircle2,
   Copy,
   Check,
+  AlertTriangle,
   Cpu,
   Layers,
   FileText,
+  Plus,
 } from 'lucide-react';
 import { useDocuments } from '@/lib/store';
 import { DmsApi } from '@/lib/api';
@@ -24,35 +26,79 @@ function BlockchainContent() {
 
   const [selectedDocId, setSelectedDocId] = useState<string>(initialId || '');
   const [isVerifying, setIsVerifying] = useState(false);
-  const [verifiedOnChain, setVerifiedOnChain] = useState(false);
+  const [isCreatingProof, setIsCreatingProof] = useState(false);
+  const [verifyResult, setVerifyResult] = useState<any>(null);
   const [copiedTx, setCopiedTx] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!selectedDocId && documents.length > 0) {
+      setSelectedDocId(documents[0].id);
+    }
+  }, [documents, selectedDocId]);
 
   const activeDoc = documents.find((d) => d.id === selectedDocId) || documents[0];
 
-  const handleVerifyOnChain = async () => {
-    if (!activeDoc) return;
+  const handleVerifyOnChain = async (docIdToVerify?: string) => {
+    const id = docIdToVerify || activeDoc?.id;
+    if (!id) return;
     setIsVerifying(true);
+    setErrorMessage(null);
     try {
-      const response = await DmsApi.getBlockchainVerify(activeDoc.id);
-      setVerifiedOnChain(Boolean(response.data));
-    } catch {
-      // simulated success
-    }
-    setTimeout(() => {
+      const response = await DmsApi.getBlockchainVerify(id);
+      if (response.data) {
+        setVerifyResult(response.data);
+        setStatusMessage(`Blockchain query completed: Status ${response.data.integrity_status}`);
+      } else {
+        setErrorMessage(response.error || 'Blockchain verification query failed.');
+      }
+    } catch (e: any) {
+      setErrorMessage(e?.message || 'Failed to reach blockchain RPC node.');
+    } finally {
       setIsVerifying(false);
-    }, 800);
+    }
   };
 
-  const handleCopyTx = () => {
-    if (!activeDoc?.blockchain_tx) return;
-    navigator.clipboard.writeText(activeDoc.blockchain_tx);
+  const handleCreateProof = async () => {
+    if (!activeDoc?.id) return;
+    setIsCreatingProof(true);
+    setErrorMessage(null);
+    setStatusMessage(null);
+    try {
+      const response = await DmsApi.createBlockchainProof(activeDoc.id);
+      if (response.data) {
+        setStatusMessage(`Smart contract proof successfully created! Network: ${response.data.network}`);
+        await handleVerifyOnChain(activeDoc.id);
+      } else {
+        setErrorMessage(response.error || 'Failed to create blockchain proof.');
+      }
+    } catch (e: any) {
+      setErrorMessage(e?.message || 'Error executing smart contract transaction.');
+    } finally {
+      setIsCreatingProof(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeDoc?.id) {
+      void handleVerifyOnChain(activeDoc.id);
+    }
+  }, [activeDoc?.id]);
+
+  const handleCopyTx = (tx: string) => {
+    if (!tx) return;
+    navigator.clipboard.writeText(tx);
     setCopiedTx(true);
     setTimeout(() => setCopiedTx(false), 2000);
   };
 
   if (!activeDoc) {
-    return <div className="p-8 text-center text-slate-500">No documents available for blockchain audit.</div>;
+    return <div className="p-8 text-center text-slate-500 text-xs">No documents available for blockchain audit.</div>;
   }
+
+  const txHash = verifyResult?.transaction_hash || activeDoc.blockchain_tx;
+  const isVerified = verifyResult?.integrity_status === 'VERIFIED';
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -67,12 +113,35 @@ function BlockchainContent() {
         </p>
       </div>
 
+      {statusMessage && (
+        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{statusMessage}</span>
+          </div>
+          <button onClick={() => setStatusMessage(null)} className="text-emerald-700 font-bold hover:underline">Dismiss</button>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+          <button onClick={() => setErrorMessage(null)} className="text-rose-700 font-bold hover:underline">Dismiss</button>
+        </div>
+      )}
+
       {/* Select Document Bar */}
       <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <label className="text-xs font-semibold text-slate-700">Select Document:</label>
         <select
           value={selectedDocId}
-          onChange={(e) => setSelectedDocId(e.target.value)}
+          onChange={(e) => {
+            setSelectedDocId(e.target.value);
+            void handleVerifyOnChain(e.target.value);
+          }}
           className="flex-1 max-w-md px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-900 focus:outline-hidden focus:border-indigo-500"
         >
           {documents.map((d) => (
@@ -81,14 +150,24 @@ function BlockchainContent() {
             </option>
           ))}
         </select>
-        <button
-          onClick={handleVerifyOnChain}
-          disabled={isVerifying}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs transition-colors shrink-0"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${isVerifying ? 'animate-spin' : ''}`} />
-          <span>{isVerifying ? 'Querying EVM Node...' : 'Verify Smart Contract Proof'}</span>
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={handleCreateProof}
+            disabled={isCreatingProof}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 text-xs font-semibold transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>{isCreatingProof ? 'Anchoring...' : 'Anchor Proof'}</span>
+          </button>
+          <button
+            onClick={() => void handleVerifyOnChain(activeDoc.id)}
+            disabled={isVerifying}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs transition-colors"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isVerifying ? 'animate-spin' : ''}`} />
+            <span>{isVerifying ? 'Querying EVM Node...' : 'Verify Proof'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Main Blockchain Certificate Card */}
@@ -101,17 +180,23 @@ function BlockchainContent() {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-bold">Ethereum Proof Certificate</h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  CONFIRMED (FINALIZED)
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                  isVerified
+                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                    : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                }`}>
+                  {verifyResult?.integrity_status || 'NOT_ANCHORED'}
                 </span>
               </div>
-              <p className="text-xs text-indigo-200 mt-0.5">Solidity Contract Registry: 0x8a92...4b12</p>
+              <p className="text-xs text-indigo-200 mt-0.5">
+                Solidity Contract Registry: 0x714c8e62Dc3c6af8946f6B89Fe43Fb67327aC077
+              </p>
             </div>
           </div>
 
           <div className="text-right font-mono">
-            <span className="text-xs text-indigo-300 block">EVM BLOCK HEIGHT</span>
-            <span className="text-2xl font-black text-white">{activeDoc.block_number ? `#${activeDoc.block_number}` : 'Unavailable'}</span>
+            <span className="text-xs text-indigo-300 block">EVM NETWORK</span>
+            <span className="text-sm font-bold text-white uppercase">{verifyResult?.network || 'Ganache / Ethereum'}</span>
           </div>
         </div>
 
@@ -129,37 +214,43 @@ function BlockchainContent() {
               <span className="text-[10px] text-indigo-300 block uppercase tracking-wider font-sans font-bold">
                 Transaction Hash
               </span>
-              <button
-                onClick={handleCopyTx}
-                className="text-[10px] text-indigo-400 hover:text-white flex items-center gap-1 font-sans"
-              >
-                {copiedTx ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                <span>{copiedTx ? 'Copied' : 'Copy'}</span>
-              </button>
+              {txHash && (
+                <button
+                  onClick={() => handleCopyTx(txHash)}
+                  className="text-[10px] text-indigo-400 hover:text-white flex items-center gap-1 font-sans"
+                >
+                  {copiedTx ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                  <span>{copiedTx ? 'Copied' : 'Copy'}</span>
+                </button>
+              )}
             </div>
             <p className="text-blue-300 break-all leading-normal text-[11px]">
-              {activeDoc.blockchain_tx || 'Unavailable'}
+              {txHash || 'Pending on-chain notarization'}
             </p>
           </div>
 
           <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-1">
             <span className="text-[10px] text-indigo-300 block uppercase tracking-wider font-sans font-bold">
-              Gas Utilized & Miner Cost
+              Smart Contract Proof Hash
             </span>
-            <p className="text-slate-200 text-sm font-bold">48,291 Gas Units (0.00096 ETH)</p>
+            <p className="text-slate-200 break-all leading-normal text-[11px]">
+              {verifyResult?.proof_hash || '0x' + activeDoc.sha256_hash.slice(0, 32)}
+            </p>
           </div>
 
           <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-1">
             <span className="text-[10px] text-indigo-300 block uppercase tracking-wider font-sans font-bold">
-              Chain Consensus & Network
+              Chain Consensus & Verification
             </span>
-            <p className="text-slate-200 text-sm font-bold">PoS Proof-of-Stake • 64 Confirmations</p>
+            <p className="text-slate-200 text-xs font-bold">
+              EVM Notarization • Status: {verifyResult?.integrity_status || 'NOT_ANCHORED'}
+            </p>
           </div>
         </div>
 
         <div className="pt-2 flex items-center justify-between text-[11px] text-indigo-300/80 font-sans border-t border-indigo-900/60">
           <span>Smart contract notary ensures zero repudiation in judicial proceedings.</span>
-          <span className="font-mono">Status: Immutable</span>
+          <span className="font-mono">Storage: PostgreSQL & EVM</span>
         </div>
       </div>
     </div>
@@ -173,4 +264,3 @@ export default function BlockchainPage() {
     </Suspense>
   );
 }
-

@@ -14,8 +14,8 @@ _development_otp_lock = Lock()
 
 def otp_provider() -> str:
     provider = os.getenv("OTP_PROVIDER", "development").strip().lower()
-    if provider not in {"development", "resend"}:
-        raise RuntimeError("OTP_PROVIDER must be either development or resend.")
+    if provider not in {"development", "mobile", "resend"}:
+        raise RuntimeError("OTP_PROVIDER must be either development, mobile, or resend.")
     return provider
 
 
@@ -30,7 +30,7 @@ def otp_setting(name: str, default: int) -> int:
 
 
 def development_otp_enabled() -> bool:
-    return otp_provider() == "development"
+    return otp_provider() in {"development", "mobile"}
 
 
 class DevelopmentOTPDelivery:

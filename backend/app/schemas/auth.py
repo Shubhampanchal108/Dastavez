@@ -42,6 +42,7 @@ class LoginChallengeResponse(BaseModel):
     challenge_id: uuid.UUID
     message: str
     dev_otp: str | None = None
+    otp: str | None = None
     expires_at: datetime | None = None
 
 

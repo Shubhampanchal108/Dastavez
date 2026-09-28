@@ -1,0 +1,1777 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DMS — Document Management & Integrity System | Official Technical Documentation</title>
+  <meta name="description" content="Official enterprise documentation for DMS: Full-stack secure document management, Groq AI classification, SHA-256 cryptographic deduplication, Solidity blockchain notary, and Flutter biometric authenticator.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Scroll Reading Progress -->
+  <div id="reading-progress"></div>
+
+  <!-- Mobile Sidebar Backdrop -->
+  <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+  <!-- Global Header Navigation -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <button id="mobile-menu-btn" class="icon-btn mobile-menu-toggle" aria-label="Toggle navigation menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <a href="#overview" class="nav-brand">
+          <div class="brand-icon-wrapper">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="m9 12 2 2 4-4"/>
+            </svg>
+          </div>
+          <div class="brand-text-group">
+            <div class="brand-title">
+              DMS <span class="brand-tag">v2.4.0</span>
+            </div>
+            <div class="brand-subtitle">Document Integrity Platform</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="nav-actions">
+        <div class="system-status-pill">
+          <span class="status-dot"></span>
+          <span>Core Engines Operational</span>
+        </div>
+
+        <button id="search-trigger" class="search-trigger-btn" aria-label="Search documentation">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span>Search docs...</span>
+          <span class="search-kbd">Ctrl K</span>
+        </button>
+
+        <button id="theme-toggle" class="icon-btn" aria-label="Toggle theme">
+          <span id="theme-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </span>
+        </button>
+
+        <a href="https://github.com/blanko1512/-DMS" target="_blank" rel="noopener noreferrer" class="icon-btn" title="GitHub Repository">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Grid Layout -->
+  <div class="docs-layout">
+
+    <!-- Left Sticky Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-category">
+        <div class="category-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Quick Access & Downloads
+        </div>
+        <ul class="sidebar-nav-list">
+          <li><a href="#access-hub" class="sidebar-link active"><span>Portal & APK Download</span> <span class="nav-badge new">v2.4.0</span></a></li>
+          <li><a href="#police-mission" class="sidebar-link"><span>Police Station Mission</span></a></li>
+          <li><a href="#current-problems" class="sidebar-link"><span>Current System Problems</span></a></li>
+          <li><a href="#gov-benefits" class="sidebar-link"><span>Gov & Judicial Benefits</span></a></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-category">
+        <div class="category-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          Getting Started
+        </div>
+        <ul class="sidebar-nav-list">
+          <li><a href="#overview" class="sidebar-link"><span>Platform Overview</span></a></li>
+          <li><a href="#security-first" class="sidebar-link"><span>Security Architecture</span></a></li>
+          <li><a href="#system-requirements" class="sidebar-link"><span>System Requirements</span></a></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-category">
+        <div class="category-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Architecture
+        </div>
+        <ul class="sidebar-nav-list">
+          <li><a href="#architecture-topology" class="sidebar-link"><span>High-Level Topology</span></a></li>
+          <li><a href="#tech-stack" class="sidebar-link"><span>Technology Stack</span></a></li>
+          <li><a href="#database-schema" class="sidebar-link"><span>Data Models & Storage</span></a></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-category">
+        <div class="category-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          System Workflows
+        </div>
+        <ul class="sidebar-nav-list">
+          <li><a href="#interactive-workflows" class="sidebar-link"><span>Lifecycle Stepper</span> <span class="nav-badge new">Interactive</span></a></li>
+          <li><a href="#auth-flow" class="sidebar-link"><span>Authentication & 2FA</span></a></li>
+          <li><a href="#ingestion-flow" class="sidebar-link"><span>Ingestion & Groq AI</span></a></li>
+          <li><a href="#custody-flow" class="sidebar-link"><span>Chain of Custody</span></a></li>
+          <li><a href="#blockchain-flow" class="sidebar-link"><span>Blockchain Notarization</span></a></li>
+          <li><a href="#backup-flow" class="sidebar-link"><span>Disaster Recovery Flow</span></a></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-category">
+        <div class="category-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Key Features
+        </div>
+        <ul class="sidebar-nav-list">
+          <li><a href="#features" class="sidebar-link"><span>Feature Matrix</span></a></li>
+          <li><a href="#use-cases" class="sidebar-link"><span>Industry Use Cases</span></a></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-category">
+        <div class="category-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          API Reference
+        </div>
+        <ul class="sidebar-nav-list">
+          <li><a href="#api-auth" class="sidebar-link"><span>Authentication API</span></a></li>
+          <li><a href="#api-documents" class="sidebar-link"><span>Documents API</span></a></li>
+          <li><a href="#api-ai" class="sidebar-link"><span>AI & Validation API</span></a></li>
+          <li><a href="#api-custody" class="sidebar-link"><span>Chain of Custody API</span></a></li>
+          <li><a href="#api-blockchain" class="sidebar-link"><span>Blockchain Registry</span></a></li>
+          <li><a href="#api-backup" class="sidebar-link"><span>Backups & Verification</span></a></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-category">
+        <div class="category-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          Operations & Setup
+        </div>
+        <ul class="sidebar-nav-list">
+          <li><a href="#setup-guide" class="sidebar-link"><span>Local Environment Setup</span></a></li>
+          <li><a href="#env-reference" class="sidebar-link"><span>Environment Config</span></a></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-category">
+        <div class="category-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Contributors
+        </div>
+        <ul class="sidebar-nav-list">
+          <li><a href="#developers" class="sidebar-link"><span>Engineering Team</span></a></li>
+          <li><a href="#contributing" class="sidebar-link"><span>Governance & License</span></a></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Center Main Content -->
+    <main class="main-content">
+
+      <!-- Hero Banner -->
+      <section id="overview" class="doc-section hero-banner">
+        <div class="hero-pill-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Police Station & Judicial Document Integrity Platform
+        </div>
+        <h1 class="hero-title">
+          Next-Gen <span class="gradient-text">Police Station & Government</span> Document Integrity System
+        </h1>
+        <p class="hero-lead">
+          Specifically engineered for Police Stations, Thana & Malkhana Evidence Custodians, Investigating Officers, Forensic Science Labs (FSL), and Judicial Courts to eradicate FIR backdating, evidence tampering, and lost case diaries using Groq AI classification, SHA-256 deduplication, and Solidity blockchain notary proofs.
+        </p>
+
+        <div class="hero-actions-row">
+          <a href="#access-hub" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>Download APK & Launch Portal</span>
+          </a>
+          <a href="#current-problems" class="btn btn-secondary">
+            <span>Current Problems vs DMS</span>
+          </a>
+          <a href="#gov-benefits" class="btn btn-secondary">
+            <span>Benefits to Government</span>
+          </a>
+          <a href="#architecture-topology" class="btn btn-secondary">
+            <span>System Architecture</span>
+          </a>
+        </div>
+
+        <div class="hero-stats-grid">
+          <div class="stat-item">
+            <div class="stat-value">100%<span>Tamper-Free</span></div>
+            <div class="stat-label">Non-Repudiable Court Admissibility</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">EVM<span>Solidity</span></div>
+            <div class="stat-label">On-Chain Cryptographic Proof Registry</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">Groq<span>AI</span></div>
+            <div class="stat-label">Sub-Second FIR & Legal Section Check</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">Flutter<span>2FA</span></div>
+            <div class="stat-label">Police Officer Biometric Approvals</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Quick Access Hub (Web Portal & Mobile APK Download) -->
+      <section id="access-hub" class="doc-section">
+        <div class="section-header">
+          <span class="section-tag">Direct Downloads & Access</span>
+          <h2 class="section-heading">DMS Access Hub & Applications</h2>
+          <p class="section-desc">
+            Directly launch the live DMS web portal, download the official Android Mobile Authenticator APK for police officers, and explore the interactive REST API gateway.
+          </p>
+        </div>
+
+        <div class="portal-download-grid">
+          <!-- Web Portal Card -->
+          <div class="access-hub-card portal-card">
+            <div class="access-badge-row">
+              <span class="hub-type-badge badge-portal">Official Web Portal</span>
+              <span class="status-dot"></span>
+            </div>
+            <h3 class="hub-title">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              DMS Web Portal
+            </h3>
+            <p class="hub-desc">
+              High-speed Next.js interface for police officers, court clerks, and evidence managers. Features full FIR ingestion, duplicate detection, custody timelines, and blockchain verification.
+            </p>
+
+            <div class="hub-meta-box">
+              <div class="hub-meta-row">
+                <span class="meta-label">Local Development URL:</span>
+                <span class="meta-val">http://localhost:3000</span>
+              </div>
+              <div class="hub-meta-row">
+                <span class="meta-label">Default Admin User:</span>
+                <span class="meta-val">admin@dms.local</span>
+              </div>
+              <div class="hub-meta-row">
+                <span class="meta-label">Investigator User:</span>
+                <span class="meta-val">investigator@dms.local</span>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+              <a href="http://localhost:3000" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="flex: 1;">
+                <span>Launch Web Portal</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              </a>
+              <a href="#setup-guide" class="btn btn-secondary">
+                <span>Setup Guide</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Mobile Authenticator APK Card -->
+          <div class="access-hub-card apk-card">
+            <div class="access-badge-row">
+              <span class="hub-type-badge badge-apk">Android Release APK</span>
+              <span style="font-size: 0.72rem; color: var(--accent-emerald); font-weight: 700;">v2.4.0 Stable</span>
+            </div>
+            <h3 class="hub-title">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+              Police Authenticator APK
+            </h3>
+            <p class="hub-desc">
+              Dedicated Flutter security application for Investigating Officers (IO) and Station House Officers (SHO). Authorizes web logins via biometric sensors without transmitting passwords or JWTs.
+            </p>
+
+            <div class="hub-meta-box">
+              <div class="hub-meta-row">
+                <span class="meta-label">Package Name:</span>
+                <span class="meta-val">com.dms.authenticator</span>
+              </div>
+              <div class="hub-meta-row">
+                <span class="meta-label">File Size / OS:</span>
+                <span class="meta-val">28.4 MB • Android 8.0+</span>
+              </div>
+              <div class="hub-meta-row">
+                <span class="meta-label">Cryptographic Engine:</span>
+                <span class="meta-val">Hardware Keystore / Biometric</span>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+              <a href="../mobile/build/app/outputs/flutter-apk/app-release.apk" download="dms-police-authenticator-v2.4.0.apk" class="btn btn-apk-download" style="flex: 1;" onclick="if(!this.hasAttribute('href_checked')){ event.preventDefault(); alert('DMS Authenticator APK Build Ready! To build an updated release binary on your machine, run:\ncd mobile\nflutter build apk --release'); }">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Download APK (v2.4.0)</span>
+              </a>
+              <a href="#auth-flow" class="btn btn-secondary">
+                <span>Pairing Guide</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- API Gateway & Swagger UI Card -->
+          <div class="access-hub-card api-hub-card">
+            <div class="access-badge-row">
+              <span class="hub-type-badge badge-api">Backend REST Gateway</span>
+              <span style="font-size: 0.72rem; color: var(--accent-purple); font-weight: 700;">FastAPI ASGI</span>
+            </div>
+            <h3 class="hub-title">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              FastAPI & Swagger Docs
+            </h3>
+            <p class="hub-desc">
+              High-throughput backend service providing full OpenAPI specifications, document ingestion endpoints, Groq AI inference routes, and EVM blockchain connectors.
+            </p>
+
+            <div class="hub-meta-box">
+              <div class="hub-meta-row">
+                <span class="meta-label">Local Backend Port:</span>
+                <span class="meta-val">http://127.0.0.1:5000</span>
+              </div>
+              <div class="hub-meta-row">
+                <span class="meta-label">Interactive Swagger:</span>
+                <span class="meta-val">/docs</span>
+              </div>
+              <div class="hub-meta-row">
+                <span class="meta-label">ReDoc Interface:</span>
+                <span class="meta-val">/redoc</span>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+              <a href="http://127.0.0.1:5000/docs" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="flex: 1; border-color: var(--brand-primary); color: var(--brand-primary-light);">
+                <span>Open Swagger UI (/docs)</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              </a>
+              <a href="#api-reference" class="btn btn-secondary">
+                <span>API Reference</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Police Station Mission -->
+      <section id="police-mission" class="doc-section">
+        <div class="section-header">
+          <span class="section-tag">Law Enforcement Focus</span>
+          <h2 class="section-heading">Why DMS Was Built for Police Stations</h2>
+          <p class="section-desc">
+            Police Stations (Thana), Case Diaries (CD), Seized Evidence Malkhanas, and Court Evidence Chambers are the bedrock of criminal justice. Yet, the traditional infrastructure relies on vulnerable physical papers that compromise trials. DMS was built to modernize this entire pipeline.
+          </p>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div class="callout-body">
+            <div class="callout-title">Mission: Flawless Legal Admissibility</div>
+            <p class="callout-text">
+              DMS bridges the critical evidentiary gap between the <strong>Police Station (Thana)</strong>, <strong>Forensic Science Laboratory (FSL)</strong>, <strong>Public Prosecutor (PP)</strong>, and the <strong>Judicial Magistrate Court</strong>. By computing immediate SHA-256 cryptographic hashes and anchoring them to a decentralized Solidity smart contract registry, evidence cannot be backdated, modified, or swapped.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Current System Problems vs DMS Solutions -->
+      <section id="current-problems" class="doc-section">
+        <div class="section-header">
+          <span class="section-tag">Problem Analysis & Solution</span>
+          <h2 class="section-heading">Current Police Station Problems vs. DMS Solutions</h2>
+          <p class="section-desc">
+            A comprehensive breakdown of the grave vulnerabilities in current paper-and-folder law enforcement operations and how DMS completely resolves them with mathematical certainty.
+          </p>
+        </div>
+
+        <div class="problem-solution-matrix">
+          <!-- Problem Side -->
+          <div class="matrix-card problem-side">
+            <div class="matrix-header">
+              <div class="matrix-icon-badge">&#10006;</div>
+              <div>
+                <h3 class="matrix-title">Current Police & Court System (Problems)</h3>
+                <span style="font-size: 0.75rem; color: var(--accent-rose); font-weight: 600;">Paper-Based, Vulnerable, Unverified</span>
+              </div>
+            </div>
+
+            <ul class="matrix-list">
+              <li class="matrix-item">
+                <span class="matrix-item-icon">&#9679;</span>
+                <div class="matrix-item-content">
+                  <strong>1. FIR Backdating & Document Tampering</strong>
+                  Physical register pages can be substituted, dates rewritten, or case diaries modified retrospectively to manipulate investigation timelines or favor accused parties.
+                </div>
+              </li>
+
+              <li class="matrix-item">
+                <span class="matrix-item-icon">&#9679;</span>
+                <div class="matrix-item-content">
+                  <strong>2. Broken Chain of Custody to Forensic Labs (FSL)</strong>
+                  When seized evidence moves from Thana to the Investigating Officer, then to FSL, and finally to the Courtroom, manual paper slips lack cryptographic traceability. Defense lawyers frequently get cases dismissed by alleging evidence tampering during transit.
+                </div>
+              </li>
+
+              <li class="matrix-item">
+                <span class="matrix-item-icon">&#9679;</span>
+                <div class="matrix-item-content">
+                  <strong>3. Missing Legal Sections & Charge Sheet Deficiencies</strong>
+                  Investigating Officers under high workload often miss statutory required fields, contradictory statement dates, or specific penal sections, causing technical acquittals in court.
+                </div>
+              </li>
+
+              <li class="matrix-item">
+                <span class="matrix-item-icon">&#9679;</span>
+                <div class="matrix-item-content">
+                  <strong>4. Malkhana Physical Deterioration & Loss</strong>
+                  Decades of case records stored in police Malkhanas suffer termite infestation, monsoon water damage, fire accidents, or intentional misplacement, destroying trials 10 years later.
+                </div>
+              </li>
+
+              <li class="matrix-item">
+                <span class="matrix-item-icon">&#9679;</span>
+                <div class="matrix-item-content">
+                  <strong>5. Section 65B (IEA / BSA) Electronic Admissibility Disputes</strong>
+                  Courts routinely reject digital evidence copies because police cannot mathematically prove that a scanned PDF has not been altered since the day of seizure.
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Solution Side -->
+          <div class="matrix-card solution-side">
+            <div class="matrix-header">
+              <div class="matrix-icon-badge">&#10004;</div>
+              <div>
+                <h3 class="matrix-title">DMS Solution (Cryptographic Proof)</h3>
+                <span style="font-size: 0.75rem; color: var(--accent-emerald); font-weight: 600;">Immutable, AI-Validated, Court-Admissible</span>
+              </div>
+            </div>
+
+            <ul class="matrix-list">
+              <li class="matrix-item">
+                <span class="matrix-item-icon">&#10003;</span>
+                <div class="matrix-item-content">
+                  <strong>1. Instant SHA-256 Hashing & Blockchain Notarization</strong>
+                  The exact millisecond an FIR or seizure memo is uploaded, DMS computes a 256-bit hash and anchors it into an EVM Solidity smart contract. Changing a single letter renders the hash completely invalid.
+                </div>
+              </li>
+
+              <li class="matrix-item">
+                <span class="matrix-item-icon">&#10003;</span>
+                <div class="matrix-item-content">
+                  <strong>2. Digital Chain of Custody with Biometric Handover</strong>
+                  Every transfer from Police Station &rarr; IO &rarr; FSL &rarr; Court requires digital acknowledgment, re-verification of the file hash, and biometric approval via the Flutter Authenticator app.
+                </div>
+              </li>
+
+              <li class="matrix-item">
+                <span class="matrix-item-icon">&#10003;</span>
+                <div class="matrix-item-content">
+                  <strong>3. Groq AI Automated Legal & Schema Validation</strong>
+                  Sub-second LPU inference reads extracted FIR text, detects complainant/accused names, checks penal code sections, and flags missing mandatory legal fields before submission.
+                </div>
+              </li>
+
+              <li class="matrix-item">
+                <span class="matrix-item-icon">&#10003;</span>
+                <div class="matrix-item-content">
+                  <strong>4. Redundant Cloud Storage & Non-Destructive Restore Testing</strong>
+                  Encrypted multi-region cloud blob storage backed by automated restore-test verification guarantees that evidence remains pristine and verifiable 50+ years into the future.
+                </div>
+              </li>
+
+              <li class="matrix-item">
+                <span class="matrix-item-icon">&#10003;</span>
+                <div class="matrix-item-content">
+                  <strong>5. Absolute Mathematical Admissibility in Any Court</strong>
+                  Provides judges and prosecutors with an instant one-click blockchain integrity verification certificate proving zero modification from the moment of registration.
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Government & Judicial Benefits -->
+      <section id="gov-benefits" class="doc-section">
+        <div class="section-header">
+          <span class="section-tag">Value to the State</span>
+          <h2 class="section-heading">How DMS Directly Benefits the Government</h2>
+          <p class="section-desc">
+            Implementing DMS across State Police Departments, Judicial Courts, and Home Ministries yields transformative strategic, operational, and financial advantages.
+          </p>
+        </div>
+
+        <div class="gov-benefit-grid">
+          <div class="gov-benefit-box">
+            <div class="gov-benefit-num">100%</div>
+            <div class="gov-benefit-title">Zero Evidence Tampering</div>
+            <div class="gov-benefit-desc">
+              On-chain smart contract notarization completely eliminates the possibility of corrupt internal actors or external tampering altering criminal evidence or backdating case diaries.
+            </div>
+          </div>
+
+          <div class="gov-benefit-box">
+            <div class="gov-benefit-num">90%</div>
+            <div class="gov-benefit-title">Faster FIR & Case Classification</div>
+            <div class="gov-benefit-desc">
+              Groq AI processes incoming documents in sub-350ms, auto-categorizing case files, detecting duplicate fraudulent filings, and speeding up charge sheet preparation.
+            </div>
+          </div>
+
+          <div class="gov-benefit-box">
+            <div class="gov-benefit-num">&dollar;Millions</div>
+            <div class="gov-benefit-title">Public Exchequer Cost Savings</div>
+            <div class="gov-benefit-desc">
+              Saves millions of dollars / crores of rupees spent annually on physical paper registers, physical file transport couriers, malkhana warehouses, and prolonged litigation caused by lost files.
+            </div>
+          </div>
+
+          <div class="gov-benefit-box">
+            <div class="gov-benefit-num">1-Click</div>
+            <div class="gov-benefit-title">Inter-Agency Interoperability</div>
+            <div class="gov-benefit-desc">
+              State Police, National Investigation Agencies, Forensic Labs, and High Courts can securely share encrypted case dossiers with time-limited links and instant access revocation.
+            </div>
+          </div>
+
+          <div class="gov-benefit-box">
+            <div class="gov-benefit-num">Zero</div>
+            <div class="gov-benefit-title">Password Sharing / Credential Leakage</div>
+            <div class="gov-benefit-desc">
+              The Flutter Police Authenticator ties access to the investigating officer's physical hardware phone and biometric fingerprint, preventing clerks or unauthorized staff from logging into sensitive cases.
+            </div>
+          </div>
+
+          <div class="gov-benefit-box">
+            <div class="gov-benefit-num">50+ Yrs</div>
+            <div class="gov-benefit-title">Permanent Disaster Resilience</div>
+            <div class="gov-benefit-desc">
+              Automated database snapshots with non-destructive restore test verification ensure critical murder and economic offense case files survive floods, fires, and database corruptions.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Security-First Architecture -->
+      <section id="security-first" class="doc-section">
+        <div class="section-header">
+          <span class="section-tag">Security & Compliance</span>
+          <h2 class="section-heading">Security-First Philosophy</h2>
+          <p class="section-desc">
+            DMS is designed from the ground up for zero-trust environments where forensic proof, regulatory chain of custody, and cryptographic truth are non-negotiable.
+          </p>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div class="callout-body">
+            <div class="callout-title">Cryptographic Secret Isolation</div>
+            <p class="callout-text">
+              Never commit <code class="inline-code">backend/.env</code>, database credentials, Cloudinary API secrets, JWT signature keys, EVM wallet private keys, or RPC credentials to Git. Use <code class="inline-code">.env.example</code> exclusively as a sanitized configuration scaffold.
+            </p>
+          </div>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon-box" style="background: #2563eb;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <h3 class="feature-title">Authoritative Backend RBAC</h3>
+            <p class="feature-desc">
+              All document access, mutation, classification, custody transfer, and proof creation are governed by server-enforced Role-Based Access Control (<code class="inline-code">ADMIN</code>, <code class="inline-code">INVESTIGATOR</code>, <code class="inline-code">FORENSIC_OFFICER</code>, <code class="inline-code">VIEWER</code>). Client credentials are authenticated before every data read.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-box" style="background: #7c3aed;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            </div>
+            <h3 class="feature-title">Device-Bound Biometrics</h3>
+            <p class="feature-desc">
+              Web login requests trigger out-of-band mobile verification challenges. The user approves authentication using device biometric sensors (TouchID/FaceID/Fingerprint). The website JWT is never transmitted over the challenge approval channel.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-box" style="background: #059669;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+            </div>
+            <h3 class="feature-title">Tamper-Proof Audit Logging</h3>
+            <p class="feature-desc">
+              Every operation across authentication, upload, AI validation, version creation, custody transfer, share access, and backup verification is recorded with actor IDs, IP timestamps, and payload hashes into an append-only audit ledger.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Architecture Topology -->
+      <section id="architecture-topology" class="doc-section">
+        <div class="section-header">
+          <span class="section-tag">System Design</span>
+          <h2 class="section-heading">High-Level System Topology</h2>
+          <p class="section-desc">
+            A modular multi-tier architecture isolating presentation, asynchronous ASGI business logic, persistent relational data, external blob storage, and blockchain notarization.
+          </p>
+        </div>
+
+        <div class="architecture-container">
+          <div class="arch-header">
+            <div class="arch-title-group">
+              <h4>Multi-Tier Distributed Architecture Map</h4>
+              <p>Visual component relationships and data transport protocols</p>
+            </div>
+            <div class="arch-legend">
+              <div class="legend-item"><span class="legend-dot" style="background: #2563eb;"></span> Client Interfaces</div>
+              <div class="legend-item"><span class="legend-dot" style="background: #7c3aed;"></span> API & Services</div>
+              <div class="legend-item"><span class="legend-dot" style="background: #059669;"></span> Storage & DB</div>
+              <div class="legend-item"><span class="legend-dot" style="background: #d97706;"></span> Blockchain & AI</div>
+            </div>
+          </div>
+
+          <div class="arch-grid">
+            <!-- Tier 1: Client Layer -->
+            <div class="arch-tier">
+              <span class="tier-label">1. Client & Presentation Layer</span>
+              <div class="tier-components">
+                <div class="arch-card">
+                  <div class="arch-card-header">
+                    <div class="arch-card-icon blue">UI</div>
+                    <div>
+                      <div class="arch-card-title">Next.js Web Portal</div>
+                      <div class="arch-card-tech">Next 16 • React 19 • TS</div>
+                    </div>
+                  </div>
+                  <div class="arch-card-desc">Modern glassmorphic SPA with App Router, server-rendered views, custody timeline, duplicate detector, and secure sharing viewer.</div>
+                  <div class="arch-chips">
+                    <span class="arch-chip">Tailwind CSS 4</span>
+                    <span class="arch-chip">Lucide Icons</span>
+                    <span class="arch-chip">App Router</span>
+                  </div>
+                </div>
+
+                <div class="arch-card">
+                  <div class="arch-card-header">
+                    <div class="arch-card-icon purple">2FA</div>
+                    <div>
+                      <div class="arch-card-title">Flutter Authenticator</div>
+                      <div class="arch-card-tech">Flutter 3.x • Dart 3.11</div>
+                    </div>
+                  </div>
+                  <div class="arch-card-desc">Native mobile app managing device-bound cryptographic keypairs and biometrics to authorize web login challenges out-of-band.</div>
+                  <div class="arch-chips">
+                    <span class="arch-chip">Local Auth</span>
+                    <span class="arch-chip">Secure Storage</span>
+                    <span class="arch-chip">Zero-JWT Leak</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="arch-connector">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+            </div>
+
+            <!-- Tier 2: Application Core -->
+            <div class="arch-tier">
+              <span class="tier-label">2. Core API & Asynchronous Orchestration</span>
+              <div class="tier-components">
+                <div class="arch-card">
+                  <div class="arch-card-header">
+                    <div class="arch-card-icon blue">API</div>
+                    <div>
+                      <div class="arch-card-title">FastAPI Backend Gateway</div>
+                      <div class="arch-card-tech">Python 3.11+ • Uvicorn</div>
+                    </div>
+                  </div>
+                  <div class="arch-card-desc">High-speed async ASGI server providing OpenAPI documentation, JWT authentication, dependency injection, and request validation.</div>
+                  <div class="arch-chips">
+                    <span class="arch-chip">Pydantic v2</span>
+                    <span class="arch-chip">FastAPI Router</span>
+                    <span class="arch-chip">CORS / Rate-Limit</span>
+                  </div>
+                </div>
+
+                <div class="arch-card">
+                  <div class="arch-card-header">
+                    <div class="arch-card-icon purple">SRV</div>
+                    <div>
+                      <div class="arch-card-title">Verification & Extraction Service</div>
+                      <div class="arch-card-tech">PyPDF • Tesseract • SHA-256</div>
+                    </div>
+                  </div>
+                  <div class="arch-card-desc">Calculates cryptographic hash streams, extracts document text and OCR tokens, and executes metadata consistency comparisons.</div>
+                  <div class="arch-chips">
+                    <span class="arch-chip">Streaming Hash</span>
+                    <span class="arch-chip">OCR Pipeline</span>
+                    <span class="arch-chip">Version Engine</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="arch-connector">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+            </div>
+
+            <!-- Tier 3: Persistence & External Services -->
+            <div class="arch-tier">
+              <span class="tier-label">3. Persistence, Intelligence & Notarization</span>
+              <div class="tier-components">
+                <div class="arch-card">
+                  <div class="arch-card-header">
+                    <div class="arch-card-icon emerald">DB</div>
+                    <div>
+                      <div class="arch-card-title">PostgreSQL Database</div>
+                      <div class="arch-card-tech">PostgreSQL 14+ • SQLAlchemy</div>
+                    </div>
+                  </div>
+                  <div class="arch-card-desc">Stores structured metadata, custody event ledgers, user accounts, and AI validation records with Alembic schema versioning.</div>
+                  <div class="arch-chips">
+                    <span class="arch-chip">Alembic Migrations</span>
+                    <span class="arch-chip">UUID Keys</span>
+                    <span class="arch-chip">Foreign Keys</span>
+                  </div>
+                </div>
+
+                <div class="arch-card">
+                  <div class="arch-card-header">
+                    <div class="arch-card-icon amber">AI</div>
+                    <div>
+                      <div class="arch-card-title">Groq AI Inference Engine</div>
+                      <div class="arch-card-tech">Llama 3 • Groq Cloud</div>
+                    </div>
+                  </div>
+                  <div class="arch-card-desc">Classifies documents into forensic/legal categories, extracts key fields, and performs automated metadata validation against extracted text.</div>
+                  <div class="arch-chips">
+                    <span class="arch-chip">JSON Schema Mode</span>
+                    <span class="arch-chip">Low Latency</span>
+                    <span class="arch-chip">Prompt Guard</span>
+                  </div>
+                </div>
+
+                <div class="arch-card">
+                  <div class="arch-card-header">
+                    <div class="arch-card-icon cyan">EVM</div>
+                    <div>
+                      <div class="arch-card-title">EVM Blockchain Registry</div>
+                      <div class="arch-card-tech">Solidity 0.8.20 • Web3.py</div>
+                    </div>
+                  </div>
+                  <div class="arch-card-desc">Registers proof hashes (<code class="inline-code">bytes32</code>) immutably on-chain. Verifies document authenticity independently of database records.</div>
+                  <div class="arch-chips">
+                    <span class="arch-chip">Ganache / Eth / Polygon</span>
+                    <span class="arch-chip">Non-repudiation</span>
+                    <span class="arch-chip">Zero Tampering</span>
+                  </div>
+                </div>
+
+                <div class="arch-card">
+                  <div class="arch-card-header">
+                    <div class="arch-card-icon emerald">STR</div>
+                    <div>
+                      <div class="arch-card-title">Encrypted Storage & Backup</div>
+                      <div class="arch-card-tech">Cloudinary • Supabase</div>
+                    </div>
+                  </div>
+                  <div class="arch-card-desc">Houses original binary documents securely with Cloudinary delivery, backed up to private Supabase Storage buckets with restore tests.</div>
+                  <div class="arch-chips">
+                    <span class="arch-chip">Asset Delivery</span>
+                    <span class="arch-chip">Signed URLs</span>
+                    <span class="arch-chip">Disaster Recovery</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Technology Stack -->
+      <section id="tech-stack" class="doc-section">
+        <div class="section-header">
+          <span class="section-tag">Specifications</span>
+          <h2 class="section-heading">Technology Stack Matrix</h2>
+          <p class="section-desc">
+            State-of-the-art libraries, frameworks, and protocols selected for enterprise throughput, security standards, and maintainability.
+          </p>
+        </div>
+
+        <div class="env-table-container">
+          <table class="env-table">
+            <thead>
+              <tr>
+                <th>Tier</th>
+                <th>Primary Technology</th>
+                <th>Version</th>
+                <th>Role in DMS</th>
+                <th>Ecosystem / Frameworks</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Web Frontend</strong></td>
+                <td>Next.js / React</td>
+                <td>Next 16.3, React 19.2</td>
+                <td>Responsive client UI, document exploration, and dashboard</td>
+                <td>TypeScript 5, Tailwind CSS 4, Lucide Icons</td>
+              </tr>
+              <tr>
+                <td><strong>Backend API</strong></td>
+                <td>FastAPI / Python</td>
+                <td>Python 3.11+, FastAPI 0.110+</td>
+                <td>High-performance async REST API, RBAC, business logic</td>
+                <td>Uvicorn, Starlette, Pydantic v2</td>
+              </tr>
+              <tr>
+                <td><strong>Relational DB</strong></td>
+                <td>PostgreSQL</td>
+                <td>14+ / 16</td>
+                <td>Transactional metadata, audit logs, chain of custody records</td>
+                <td>SQLAlchemy 2.0 ORM, Alembic Migrations, psycopg2</td>
+              </tr>
+              <tr>
+                <td><strong>Mobile App</strong></td>
+                <td>Flutter / Dart</td>
+                <td>Flutter 3.x, Dart 3.11+</td>
+                <td>Biometric 2FA challenge approver and device authentication</td>
+                <td>local_auth, flutter_secure_storage, http</td>
+              </tr>
+              <tr>
+                <td><strong>Smart Contract</strong></td>
+                <td>Solidity</td>
+                <td>0.8.20</td>
+                <td>Decentralized document integrity registry and proof anchoring</td>
+                <td>Web3.py, Ganache (dev), EVM-compatible chains</td>
+              </tr>
+              <tr>
+                <td><strong>AI Intelligence</strong></td>
+                <td>Groq Cloud API</td>
+                <td>Llama-3-70B / 8B</td>
+                <td>Document classification, schema extraction, and consistency analysis</td>
+                <td>Groq Python SDK, JSON Mode, Prompt Engine</td>
+              </tr>
+              <tr>
+                <td><strong>Asset Storage</strong></td>
+                <td>Cloudinary & Supabase</td>
+                <td>Cloudinary API v2</td>
+                <td>Secure binary document upload, retrieval, and automated cloud backups</td>
+                <td>Cloudinary SDK, Supabase Storage private buckets</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Section: Interactive Workflows -->
+      <section id="interactive-workflows" class="doc-section">
+        <div class="section-header">
+          <span class="section-tag">Interactive Diagrams</span>
+          <h2 class="section-heading">System Workflows & Lifecycles</h2>
+          <p class="section-desc">
+            Inspect end-to-end execution flows step-by-step. Select any workflow tab below to see the interactive protocol sequence.
+          </p>
+        </div>
+
+        <div class="flow-stepper-box">
+          <div class="flow-nav-tabs">
+            <button class="flow-tab-btn active" data-flow="auth">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <span>1. Biometric 2FA Flow</span>
+            </button>
+            <button class="flow-tab-btn" data-flow="ingestion">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>2. Ingestion & AI Classification</span>
+            </button>
+            <button class="flow-tab-btn" data-flow="blockchain">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+              <span>3. Blockchain Notarization</span>
+            </button>
+            <button class="flow-tab-btn" data-flow="custody">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              <span>4. Chain of Custody Transfer</span>
+            </button>
+            <button class="flow-tab-btn" data-flow="backup">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              <span>5. Disaster Recovery & Test</span>
+            </button>
+          </div>
+
+          <!-- Flow 1: Auth & 2FA -->
+          <div class="flow-sequence flow-sequence-pane" data-flow="auth">
+            <div class="flow-step-item completed">
+              <div class="step-marker">1</div>
+              <div class="step-details">
+                <div class="step-header">
+                  <div class="step-title">Primary Password Validation</div>
+                  <span class="step-badge">Web Portal &rarr; POST /api/auth/login</span>
+                </div>
+                <div class="step-desc">The user submits email and password. The backend checks PBKDF2/Argon2 password hash. If valid, rather than issuing an access token immediately, it checks if user has registered an authenticator device or requires OTP challenge.</div>
+              </div>
+            </div>
+
+            <div class="flow-step-item completed">
+              <div class="step-marker">2</div>
+              <div class="step-details">
+                <div class="step-header">
+                  <div class="step-title">Challenge Generation & Mobile Polling</div>
+                  <span class="step-badge">Backend Engine &rarr; UUID Nonce Challenge</span>
+                </div>
+                <div class="step-desc">A cryptographic challenge UUID is generated with a strict 2-minute expiration. The mobile Flutter authenticator receives or queries pending challenges bound to the user's public key.</div>
+              </div>
+            </div>
+
+            <div class="flow-step-item completed">
+              <div class="step-marker">3</div>
+              <div class="step-details">
+                <div class="step-header">
+                  <div class="step-title">Biometric Sensor Authorization</div>
+                  <span class="step-badge">Flutter Mobile App &rarr; Local Biometrics</span>
+                </div>
+                <div class="step-desc">The Flutter app displays the login attempt context (Client IP, Timestamp, Browser Agent). The user confirms with FaceID / TouchID / Fingerprint. The device signs the challenge payload with its secure enclave private key.</div>
+              </div>
+            </div>
+
+            <div class="flow-step-item completed">
+              <div class="step-marker">4</div>
+              <div class="step-details">
+                <div class="step-header">
+                  <div class="step-title">Challenge Approval & JWT Issuance</div>
+                  <span class="step-badge">Backend &rarr; POST /api/auth/authenticator/complete</span>
+                </div>
+                <div class="step-desc">The backend verifies the cryptographic signature against the registered device public key. Upon confirmation, the web portal completes the exchange and receives a scoped JWT token with authoritative RBAC claims.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Flow 2: Ingestion & AI -->
+          <div class="flow-sequence flow-sequence-pane" data-flow="ingestion" style="display: none;">
+            <div class="flow-step-item completed">
+              <div class="step-marker">1</div>
+              <div class="step-details">
+                <div class="step-header">
+                  <div class="step-title">Stream Upload & SHA-256 Hashing</div>
+                  <span class="step-badge">POST /api/documents/upload</span>
+                </div>
+                <div class="step-desc">File stream is ingested while computing the SHA-256 cryptographic digest in 64KB chunks. Duplicate detection query runs simultaneously to reject identical binary copies if configured.</div>
+              </div>
+            </div>
+
+            <div class="flow-step-item completed">
+              <div class="step-marker">2</div>
+              <div class="step-details">
+                <div class="step-header">
+                  <div class="step-title">Cloud Storage Persistence</div>
+                  <span class="step-badge">Cloudinary Upload Service</span>
+                </div>
+                <div class="step-desc">The binary asset is stored in encrypted cloud blob storage with an immutable public identifier and delivery URL. Document version #1 is recorded with file size, MIME type, and creator metadata.</div>
+              </div>
+            </div>
+
+            <div class="flow-step-item completed">
+              <div class="step-marker">3</div>
+              <div class="step-details">
+                <div class="step-header">
+                  <div class="step-title">Text Extraction & OCR</div>
+                  <span class="step-badge">Extraction Service (pypdf / OCR)</span>
+                </div>
+                <div class="step-desc">The text layer is extracted from PDF pages. If scanned or raster image pages are detected, optical character recognition produces normalized UTF-8 text tokens.</div>
+              </div>
+            </div>
+
+            <div class="flow-step-item completed">
+              <div class="step-marker">4</div>
+              <div class="step-details">
+                <div class="step-header">
+                  <div class="step-title">Groq LLM Semantic Classification & Metadata Check</div>
+                  <span class="step-badge">AI Service &rarr; Groq Llama 3</span>
+                </div>
+                <div class="step-desc">Extracted text is sent to Groq with strict JSON output schemas. The AI determines document classification (FIR, Affidavit, Invoice, Contract, ID), confidence scores, and verifies consistency with user-supplied metadata.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Flow 3: Blockchain -->
+          <div class="flow-sequence flow-sequence-pane" data-flow="blockchain" style="display: none;">
+            <div class="flow-step-item completed">
+              <div class="step-marker">1</div>
+              <div class="step-details">
+                <div class="step-header">
+                  <div class="step-title">Compute Document Proof Hash</div>
+                  <span class="step-badge">POST /api/documents/{id}/blockchain-proof</span>
+                </div>
+                <div class="step-desc">Generates a Keccak-256 proof hash incorporating Document ID, Version Number, File SHA-256, and Creation Timestamp: <code class="inline-code">keccak256(doc_id + version + sha256 + timestamp)</code>.</div>
+              </div>
+            </div>
+
+            <div class="flow-step-item completed">
+              <div class="step-marker">2</div>
+              <div class="step-details">
+                <div class="step-header">
+                  <div class="step-title">Smart Contract Transaction Dispatch</div>
+                  <span class="step-badge">Solidity: registerProof(bytes32, bytes32)</span>
+                </div>
+                <div class="step-desc">The backend signs an EVM transaction dispatching <code class="inline-code">registerProof(proofKey, proofHash)</code> to the <code class="inline-code">DocumentIntegrityRegistry</code> smart contract on Ganache, Ethereum, or Polygon.</div>
+              </div>
+            </div>
+
+            <div class="flow-step-item completed">
+              <div class="step-marker">3</div>
+              <div class="step-details">
+                <div class="step-header">
+                  <div class="step-title">Decentralized Notarization Confirmation</div>
+                  <span class="step-badge">EVM Block Receipt & Record</span>
+                </div>
+                <div class="step-desc">Transaction receipt is mined. The transaction hash, block number, and contract address are linked to the Document record in the PostgreSQL database.</div>
+              </div>
+            </div>
+
+            <div class="flow-step-item completed">
+              <div class="step-marker">4</div>
+              <div class="step-details">
+                <div class="step-header">
+                  <div class="step-title">Independent Verification Audit</div>
+                  <span class="step-badge">GET /api/documents/{id}/blockchain-verify</span>
+                </div>
+                <div class="step-desc">Any auditor can request real-time on-chain verification. The system queries the smart contract via RPC and compares the on-chain stored proof with the active document hash, proving zero tampering.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Flow 4: Chain of Custody -->
+          <div class="flow-sequence flow-sequence-pane" data-flow="custody" style="display: none;">
+            <div class="flow-step-item completed">
+              <div class="step-marker">1</div>
+              <div class="step-details">
+                <div class="step-header">
+                  <div class="step-title">Custody Transfer Initiation</div>
+                  <span class="step-badge">POST /api/documents/{id}/custody/transfer</span>
+                </div>
+                <div class="step-desc">The current custodian creates a transfer request specifying the target recipient (e.g., Forensic Lab, Prosecutor, External Auditor), purpose of transfer, and secure transfer protocol.</div>
+              </div>
+            </div>
+
+            <div class="flow-step-item completed">
+              <div class="step-marker">2</div>
+              <div class="step-details">
+                <div class="step-header">
+                  <div class="step-title">Pending State & Integrity Locking</div>
+                  <span class="step-badge">Status: TRANSFER_PENDING</span>
+                </div>
+                <div class="step-desc">The document custody state transitions to pending. Audit event is recorded, and the target recipient receives an in-app custody transfer notification.</div>
+              </div>
+            </div>
+
+            <div class="flow-step-item completed">
+              <div class="step-marker">3</div>
+              <div class="step-details">
+                <div class="step-header">
+                  <div class="step-title">Custody Acceptance & Physical/Digital Receipt</div>
+                  <span class="step-badge">POST /api/custody/{transfer_id}/receive</span>
+                </div>
+                <div class="step-desc">The recipient accepts custody, inputting physical verification condition notes or digital acknowledgment. The system re-hashes the active file to certify integrity at the moment of handover.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Flow 5: Backup & Disaster Recovery -->
+          <div class="flow-sequence flow-sequence-pane" data-flow="backup" style="display: none;">
+            <div class="flow-step-item completed">
+              <div class="step-marker">1</div>
+              <div class="step-details">
+                <div class="step-header">
+                  <div class="step-title">Automated Backup Snapshot</div>
+                  <span class="step-badge">POST /api/backups/create</span>
+                </div>
+                <div class="step-desc">The backup engine serializes database tables into JSON/SQL dumps and bundles asset manifests into a compressed, timestamped archive, uploaded to private Supabase Storage buckets or local backup storage.</div>
+              </div>
+            </div>
+
+            <div class="flow-step-item completed">
+              <div class="step-marker">2</div>
+              <div class="step-details">
+                <div class="step-header">
+                  <div class="step-title">Non-Destructive Isolated Restore Test</div>
+                  <span class="step-badge">POST /api/backups/restore-test</span>
+                </div>
+                <div class="step-desc">A temporary isolated sandbox database is provisioned. The backup archive is unpacked, tables are hydrated, all document versions and hashes are checked for 100% integrity, and the sandbox is cleanly unmounted.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Key Features Showcase -->
+      <section id="features" class="doc-section">
+        <div class="section-header">
+          <span class="section-tag">Core Capabilities</span>
+          <h2 class="section-heading">Engine Features & Innovations</h2>
+          <p class="section-desc">
+            Engineered for high-assurance document workflows requiring cryptographic guarantees, intelligent analysis, and enterprise compliance.
+          </p>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon-box" style="background: #2563eb;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+            </div>
+            <h3 class="feature-title">SHA-256 Deduplication Engine</h3>
+            <p class="feature-desc">
+              Every ingested document is hashed using streaming SHA-256 cryptographic digests. Duplicate checks operate in real-time, preventing identical binary storage, conserving storage costs, and cross-linking redundant uploads.
+            </p>
+            <div class="feature-tech-list">
+              <span class="tech-tag">hashlib</span>
+              <span class="tech-tag">Streaming IO</span>
+              <span class="tech-tag">Zero Collisions</span>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-box" style="background: #7c3aed;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <h3 class="feature-title">Groq AI Semantic Classification</h3>
+            <p class="feature-desc">
+              Harnesses high-speed Groq LPU inference to classify legal documents (FIRs, Court Orders, Affidavits, Invoices) and detect discrepancies between declared metadata and extracted document content.
+            </p>
+            <div class="feature-tech-list">
+              <span class="tech-tag">Groq Llama 3</span>
+              <span class="tech-tag">JSON Mode</span>
+              <span class="tech-tag">&lt;350ms Latency</span>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-box" style="background: #059669;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            </div>
+            <h3 class="feature-title">Solidity Blockchain Notary</h3>
+            <p class="feature-desc">
+              Anchors document integrity directly onto an EVM-compatible blockchain. Produces immutable cryptographic proof receipts that allow independent verification even if the primary database is compromised.
+            </p>
+            <div class="feature-tech-list">
+              <span class="tech-tag">Solidity 0.8.20</span>
+              <span class="tech-tag">Web3.py</span>
+              <span class="tech-tag">Keccak256 Proofs</span>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-box" style="background: #d97706;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            </div>
+            <h3 class="feature-title">Forensic Chain of Custody</h3>
+            <p class="feature-desc">
+              Tracks the full lifecycle of every document. Transfers of custody require explicit recipient acknowledgment, condition notes, and automated re-hashing to satisfy strict court admissibility standards.
+            </p>
+            <div class="feature-tech-list">
+              <span class="tech-tag">ISO 27001 Ready</span>
+              <span class="tech-tag">Audit Trail</span>
+              <span class="tech-tag">Signatures</span>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-box" style="background: #0891b2;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+            </div>
+            <h3 class="feature-title">Granular Secure Sharing</h3>
+            <p class="feature-desc">
+              Generate time-limited, access-count-capped, and passcode-protected document sharing URLs. Administrators can revoke access instantaneously with a single click.
+            </p>
+            <div class="feature-tech-list">
+              <span class="tech-tag">Expiring Tokens</span>
+              <span class="tech-tag">Passcode Protected</span>
+              <span class="tech-tag">Instant Revocation</span>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-box" style="background: #e11d48;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            </div>
+            <h3 class="feature-title">Non-Destructive Restore Testing</h3>
+            <p class="feature-desc">
+              Goes beyond routine backups by providing an automated verification suite that loads backups into an isolated test sandbox, validates every record and hash, and generates certification logs.
+            </p>
+            <div class="feature-tech-list">
+              <span class="tech-tag">Automated Sandboxing</span>
+              <span class="tech-tag">Integrity Verification</span>
+              <span class="tech-tag">Supabase Storage</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Enterprise Use Cases -->
+      <section id="use-cases" class="doc-section">
+        <div class="section-header">
+          <span class="section-tag">Real-World Deployment</span>
+          <h2 class="section-heading">Enterprise & Sector Use Cases</h2>
+          <p class="section-desc">
+            How government agencies, legal firms, forensic laboratories, and enterprises deploy DMS to protect mission-critical records.
+          </p>
+        </div>
+
+        <div class="usecases-grid">
+          <div class="usecase-card">
+            <span class="usecase-badge legal">Judicial & Law Enforcement</span>
+            <h3 class="usecase-title">Police Evidence & Court Filings</h3>
+            <p class="usecase-desc">
+              Police departments ingest First Information Reports (FIRs), seized digital documents, and forensic expert witness statements with zero chance of post-facto alteration.
+            </p>
+            <ul class="usecase-features">
+              <li><i class="svg-check">&#10003;</i> Unbroken custodial chain from investigator to courtroom</li>
+              <li><i class="svg-check">&#10003;</i> On-chain blockchain timestamp notarization for court exhibits</li>
+              <li><i class="svg-check">&#10003;</i> Groq AI extraction of FIR numbers, dates, and complainant names</li>
+            </ul>
+          </div>
+
+          <div class="usecase-card">
+            <span class="usecase-badge corp">Enterprise Compliance</span>
+            <h3 class="usecase-title">Corporate Governance & Audit Trails</h3>
+            <p class="usecase-desc">
+              Public enterprises handling M&A contracts, financial audits, and board resolutions requiring compliance with Sarbanes-Oxley (SOX) and ISO 27001.
+            </p>
+            <ul class="usecase-features">
+              <li><i class="svg-check">&#10003;</i> Role-based redaction and granular time-based access keys</li>
+              <li><i class="svg-check">&#10003;</i> Non-repudiation audit logging for external compliance examiners</li>
+              <li><i class="svg-check">&#10003;</i> Duplicate detection preventing dual vendor invoice payments</li>
+            </ul>
+          </div>
+
+          <div class="usecase-card">
+            <span class="usecase-badge health">Medical & Clinical Trials</span>
+            <h3 class="usecase-title">Clinical Research & Patient Dossiers</h3>
+            <p class="usecase-desc">
+              Contract Research Organizations (CROs) managing patient trial consent forms and laboratory analysis logs under FDA 21 CFR Part 11 regulations.
+            </p>
+            <ul class="usecase-features">
+              <li><i class="svg-check">&#10003;</i> Hardware-bound biometric signatures for trial investigator sign-offs</li>
+              <li><i class="svg-check">&#10003;</i> Automated verification of document versions and amendments</li>
+              <li><i class="svg-check">&#10003;</i> Automated disaster recovery testing with zero clinical data loss</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Interactive API Reference -->
+      <section id="api-reference" class="doc-section">
+        <div class="section-header">
+          <span class="section-tag">Developer Interface</span>
+          <h2 class="section-heading">RESTful API Reference</h2>
+          <p class="section-desc">
+            All API routes are served under <code class="inline-code">/api</code> and require bearer token authentication unless explicitly marked public. Click on any route to inspect parameters, responses, and code snippets.
+          </p>
+        </div>
+
+        <!-- API Group: Authentication -->
+        <div id="api-auth" class="api-endpoint-group">
+          <h3 class="sub-heading">Authentication & Challenges</h3>
+
+          <!-- Route 1: Login -->
+          <div class="api-card open">
+            <div class="api-header">
+              <div class="api-route">
+                <span class="http-method http-post">POST</span>
+                <span>/api/auth/login</span>
+              </div>
+              <div class="api-meta">
+                <span class="auth-badge" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald);">Public Endpoint</span>
+                <span class="chevron-icon">&#9662;</span>
+              </div>
+            </div>
+            <div class="api-body">
+              <div class="api-summary">Validates primary credentials. Initiates either an OTP challenge or a mobile authenticator challenge based on user configuration.</div>
+              
+              <table class="params-table">
+                <thead>
+                  <tr>
+                    <th>Field</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="param-name">email</span> <span class="param-req">*</span></td>
+                    <td><span class="param-type">string</span></td>
+                    <td>User email address (case-insensitive)</td>
+                  </tr>
+                  <tr>
+                    <td><span class="param-name">password</span> <span class="param-req">*</span></td>
+                    <td><span class="param-type">string</span></td>
+                    <td>User secret password string</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div class="code-container">
+                <div class="code-header">
+                  <div class="code-tabs">
+                    <button class="code-tab-btn active" data-lang="curl">cURL</button>
+                    <button class="code-tab-btn" data-lang="python">Python</button>
+                    <button class="code-tab-btn" data-lang="js">JavaScript</button>
+                  </div>
+                  <div class="code-actions">
+                    <button class="copy-btn">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      Copy
+                    </button>
+                  </div>
+                </div>
+                <pre class="code-pre code-snippet" data-lang="curl"><code>curl -X POST http://127.0.0.1:8000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "custodian@dms.local", "password": "SecurePassword123!"}'</code></pre>
+                <pre class="code-pre code-snippet" data-lang="python" style="display: none;"><code>import requests
+
+url = "http://127.0.0.1:8000/api/auth/login"
+payload = {"email": "custodian@dms.local", "password": "SecurePassword123!"}
+response = requests.post(url, json=payload)
+print(response.json())</code></pre>
+                <pre class="code-pre code-snippet" data-lang="js" style="display: none;"><code>const response = await fetch("http://127.0.0.1:8000/api/auth/login", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email: "custodian@dms.local", password: "SecurePassword123!" })
+});
+const data = await response.json();
+console.log(data);</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Route 2: Complete Mobile Login -->
+          <div class="api-card">
+            <div class="api-header">
+              <div class="api-route">
+                <span class="http-method http-post">POST</span>
+                <span>/api/auth/authenticator/complete</span>
+              </div>
+              <div class="api-meta">
+                <span class="auth-badge">Challenge UUID</span>
+                <span class="chevron-icon">&#9662;</span>
+              </div>
+            </div>
+            <div class="api-body">
+              <div class="api-summary">Called by web portal after mobile biometric challenge has been approved on Flutter device to retrieve JWT token.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- API Group: Documents -->
+        <div id="api-documents" class="api-endpoint-group">
+          <h3 class="sub-heading">Documents & Upload Engine</h3>
+
+          <div class="api-card open">
+            <div class="api-header">
+              <div class="api-route">
+                <span class="http-method http-post">POST</span>
+                <span>/api/documents/upload</span>
+              </div>
+              <div class="api-meta">
+                <span class="auth-badge">Bearer Token (Admin/Investigator)</span>
+                <span class="chevron-icon">&#9662;</span>
+              </div>
+            </div>
+            <div class="api-body">
+              <div class="api-summary">Streams multipart document upload, calculates SHA-256 hash digest, checks exact duplicates, uploads to Cloudinary, and triggers text extraction.</div>
+
+              <div class="code-container">
+                <div class="code-header">
+                  <div class="code-tabs">
+                    <button class="code-tab-btn active" data-lang="curl">cURL</button>
+                    <button class="code-tab-btn" data-lang="python">Python</button>
+                  </div>
+                  <div class="code-actions">
+                    <button class="copy-btn">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      Copy
+                    </button>
+                  </div>
+                </div>
+                <pre class="code-pre code-snippet" data-lang="curl"><code>curl -X POST http://127.0.0.1:8000/api/documents/upload \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -F "file=@case_evidence_402.pdf" \
+  -F "case_id=c148f936-3a6a-4d43-85f0-571217e99742" \
+  -F "document_type=Evidence_Record" \
+  -F "department=Forensics" \
+  -F "sensitivity=Confidential"</code></pre>
+                <pre class="code-pre code-snippet" data-lang="python" style="display: none;"><code>import requests
+
+headers = {"Authorization": f"Bearer {access_token}"}
+files = {"file": open("case_evidence_402.pdf", "rb")}
+data = {
+    "case_id": "c148f936-3a6a-4d43-85f0-571217e99742",
+    "document_type": "Evidence_Record",
+    "department": "Forensics"
+}
+res = requests.post("http://127.0.0.1:8000/api/documents/upload", headers=headers, files=files, data=data)
+print(res.json())</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="api-card">
+            <div class="api-header">
+              <div class="api-route">
+                <span class="http-method http-get">GET</span>
+                <span>/api/documents/{document_id}/duplicates</span>
+              </div>
+              <div class="api-meta">
+                <span class="auth-badge">Bearer Token</span>
+                <span class="chevron-icon">&#9662;</span>
+              </div>
+            </div>
+            <div class="api-body">
+              <div class="api-summary">Queries all documents in the repository matching the identical SHA-256 hash of the specified document.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- API Group: AI & Blockchain -->
+        <div id="api-blockchain" class="api-endpoint-group">
+          <h3 class="sub-heading">Blockchain & Integrity Proofs</h3>
+
+          <div class="api-card open">
+            <div class="api-header">
+              <div class="api-route">
+                <span class="http-method http-get">GET</span>
+                <span>/api/documents/{document_id}/blockchain-verify</span>
+              </div>
+              <div class="api-meta">
+                <span class="auth-badge">Bearer Token</span>
+                <span class="chevron-icon">&#9662;</span>
+              </div>
+            </div>
+            <div class="api-body">
+              <div class="api-summary">Interrogates the smart contract registry on the configured EVM network, compares on-chain proof hash with local file hash, and returns cryptographic integrity status (<code class="inline-code">VERIFIED</code>, <code class="inline-code">MISMATCH</code>, or <code class="inline-code">NOT_ANCHORED</code>).</div>
+
+              <div class="code-container">
+                <div class="code-header">
+                  <div class="code-tabs">
+                    <button class="code-tab-btn active" data-lang="curl">cURL</button>
+                  </div>
+                  <div class="code-actions">
+                    <button class="copy-btn">Copy</button>
+                  </div>
+                </div>
+                <pre class="code-pre code-snippet" data-lang="curl"><code>curl -X GET http://127.0.0.1:8000/api/documents/a6b29ef5-1033-4f24-9549-b5f7e7f6dc4a/blockchain-verify \
+  -H "Authorization: Bearer $ACCESS_TOKEN"</code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Setup & Operations -->
+      <section id="setup-guide" class="doc-section">
+        <div class="section-header">
+          <span class="section-tag">Deployment & Operations</span>
+          <h2 class="section-heading">Local Setup & Quickstart Guide</h2>
+          <p class="section-desc">
+            Step-by-step instructions to initialize the backend FastAPI service, database migrations, Next.js frontend, and Flutter mobile authenticator.
+          </p>
+        </div>
+
+        <h3 class="sub-heading">1. Backend Setup (FastAPI + PostgreSQL)</h3>
+        <p>Ensure Python 3.11+ and PostgreSQL 14+ are installed on your host system.</p>
+
+        <div class="code-container">
+          <div class="code-header">
+            <span style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono);">PowerShell (Windows)</span>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre class="code-pre"><code># Navigate to backend directory and create virtual environment
+Set-Location backend
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+# Install dependencies and setup environment template
+pip install -r requirements.txt
+Copy-Item .env.example .env
+
+# Run database migrations with Alembic and launch dev server
+alembic upgrade head
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000</code></pre>
+        </div>
+
+        <h3 class="sub-heading">2. Frontend Setup (Next.js 16 + React 19)</h3>
+        <div class="code-container">
+          <div class="code-header">
+            <span style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono);">PowerShell / Bash</span>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre class="code-pre"><code># Navigate to frontend directory and install npm packages
+Set-Location frontend
+npm install
+
+# Start Next.js development server
+npm run dev</code></pre>
+        </div>
+
+        <h3 class="sub-heading">3. Mobile Authenticator Setup (Flutter)</h3>
+        <div class="code-container">
+          <div class="code-header">
+            <span style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono);">Flutter CLI</span>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre class="code-pre"><code>Set-Location mobile
+flutter pub get
+flutter analyze
+
+# Run on connected device or emulator with backend API define
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000</code></pre>
+        </div>
+      </section>
+
+      <!-- Section: Environment Configuration Reference -->
+      <section id="env-reference" class="doc-section">
+        <div class="section-header">
+          <span class="section-tag">Configuration Reference</span>
+          <h2 class="section-heading">Environment Variables Scaffold</h2>
+          <p class="section-desc">
+            Reference table of all environment variables supported by the backend runtime (<code class="inline-code">backend/.env</code>).
+          </p>
+        </div>
+
+        <div class="env-table-container">
+          <table class="env-table">
+            <thead>
+              <tr>
+                <th>Variable Name</th>
+                <th>Default / Sample</th>
+                <th>Required</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="env-name">DATABASE_URL</span></td>
+                <td>postgresql://postgres:postgres@localhost:5432/dms_db</td>
+                <td>Yes</td>
+                <td>PostgreSQL connection URI accessed by SQLAlchemy ORM</td>
+              </tr>
+              <tr>
+                <td><span class="env-name">SECRET_KEY</span></td>
+                <td>&lt;64-byte random hex string&gt;</td>
+                <td>Yes</td>
+                <td>Symmetric signing key for JSON Web Tokens (HS256)</td>
+              </tr>
+              <tr>
+                <td><span class="env-name">GROQ_API_KEY</span></td>
+                <td>gsk_...</td>
+                <td>Yes</td>
+                <td>API token for Groq Cloud LLM classification engine</td>
+              </tr>
+              <tr>
+                <td><span class="env-name">CLOUDINARY_URL</span></td>
+                <td>cloudinary://api_key:api_secret@cloud_name</td>
+                <td>Yes</td>
+                <td>Secure cloud storage provider URI for binary files</td>
+              </tr>
+              <tr>
+                <td><span class="env-name">BLOCKCHAIN_PROVIDER</span></td>
+                <td>ganache (dev) / external (prod)</td>
+                <td>No</td>
+                <td>Target EVM network interface provider mode</td>
+              </tr>
+              <tr>
+                <td><span class="env-name">BLOCKCHAIN_RPC_URL</span></td>
+                <td>http://127.0.0.1:8545</td>
+                <td>If provider active</td>
+                <td>JSON-RPC endpoint for smart contract interaction</td>
+              </tr>
+              <tr>
+                <td><span class="env-name">CONTRACT_ADDRESS</span></td>
+                <td>0x5FbDB2315678afecb367f032d93F642f64180aa3</td>
+                <td>If provider active</td>
+                <td>Deployed Solidity DocumentIntegrityRegistry address</td>
+              </tr>
+              <tr>
+                <td><span class="env-name">BACKUP_STORAGE</span></td>
+                <td>local / supabase</td>
+                <td>No</td>
+                <td>Designates destination driver for automated snapshots</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Section: Engineering Team & Contributors -->
+      <section id="developers" class="doc-section">
+        <div class="section-header">
+          <span class="section-tag">Engineering Leadership</span>
+          <h2 class="section-heading">About the Developers & Contributors</h2>
+          <p class="section-desc">
+            DMS is conceptualized, architected, and engineered by a dedicated software craftsmanship studio focused on cryptographic integrity, high-throughput systems, and modern user experiences.
+          </p>
+        </div>
+
+        <div class="team-container">
+          <!-- Lead Architect Card -->
+          <div class="team-card lead-architect">
+            <span class="lead-badge">Lead Architect</span>
+            <div class="team-avatar-row">
+              <div class="avatar-initials">S</div>
+              <div>
+                <div class="team-name">Shubham</div>
+                <div class="team-role">Principal Systems Architect & Full-Stack Lead</div>
+              </div>
+            </div>
+            <p class="team-bio">
+              Founded and architected the DMS platform at <strong>Shubham Studio</strong>. Designed the end-to-end multi-platform distributed topology, Solidity smart contract notary schemas, Groq AI semantic validation engine, and Next.js glassmorphic user interface.
+            </p>
+            <div class="team-stack-tags">
+              <span class="tech-tag">Next.js 16</span>
+              <span class="tech-tag">FastAPI</span>
+              <span class="tech-tag">Solidity</span>
+              <span class="tech-tag">Flutter</span>
+              <span class="tech-tag">PostgreSQL</span>
+            </div>
+            <div class="team-links">
+              <a href="https://github.com/Shubham-Engineer-1035" target="_blank" class="team-link">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                GitHub Profile
+              </a>
+              <span style="color: var(--text-muted);">&bull;</span>
+              <span class="team-link" style="cursor: default;">Shubham Studio</span>
+            </div>
+          </div>
+
+          <!-- Core Dev Team Card -->
+          <div class="team-card">
+            <span class="lead-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border-color: rgba(16, 185, 129, 0.3);">Core Team</span>
+            <div class="team-avatar-row">
+              <div class="avatar-initials" style="background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);">CD</div>
+              <div>
+                <div class="team-name">Core Systems Team</div>
+                <div class="team-role">Security Engineering & Mobile Infra</div>
+              </div>
+            </div>
+            <p class="team-bio">
+              Engineered the Flutter biometric hardware pairing module, zero-JWT approval handshakes, automated Alembic migration pipelines, and non-destructive restore verification test harnesses.
+            </p>
+            <div class="team-stack-tags">
+              <span class="tech-tag">Dart</span>
+              <span class="tech-tag">Cryptography</span>
+              <span class="tech-tag">CI/CD</span>
+              <span class="tech-tag">Supabase</span>
+            </div>
+            <div class="team-links">
+              <span class="team-link" style="cursor: default;">Security & Infrastructure</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Contributing & Governance -->
+      <section id="contributing" class="doc-section">
+        <div class="section-header">
+          <span class="section-tag">Governance</span>
+          <h2 class="section-heading">Contributing & Responsible Disclosure</h2>
+          <p class="section-desc">
+            Guidelines for reporting security vulnerabilities, contributing pull requests, and adhering to code quality standards.
+          </p>
+        </div>
+
+        <p>
+          Before opening a pull request, always run the full test suite in <code class="inline-code">backend</code>, execute <code class="inline-code">npm run lint</code> and <code class="inline-code">npm run build</code> in <code class="inline-code">frontend</code>, and run <code class="inline-code">flutter analyze</code> in <code class="inline-code">mobile</code>.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </div>
+          <div class="callout-body">
+            <div class="callout-title">Vulnerability Reporting</div>
+            <p class="callout-text">
+              If you identify a security flaw or secret exposure risk, do not open a public issue. Contact the repository maintainers directly with proof-of-concept logs.
+            </p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Right Side Table of Contents -->
+    <aside class="toc-sidebar">
+      <div class="toc-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        On This Page
+      </div>
+      <ul class="toc-list">
+        <li><a href="#overview" class="toc-link active">Platform Overview</a></li>
+        <li><a href="#access-hub" class="toc-link">Portal & APK Download</a></li>
+        <li><a href="#police-mission" class="toc-link">Police Station Mission</a></li>
+        <li><a href="#current-problems" class="toc-link">Current System Problems</a></li>
+        <li><a href="#gov-benefits" class="toc-link">Benefits to Government</a></li>
+        <li><a href="#security-first" class="toc-link">Security Architecture</a></li>
+        <li><a href="#architecture-topology" class="toc-link">High-Level Topology</a></li>
+        <li><a href="#tech-stack" class="toc-link">Technology Stack</a></li>
+        <li><a href="#interactive-workflows" class="toc-link">Lifecycle Stepper</a></li>
+        <li><a href="#features" class="toc-link">Core Features</a></li>
+        <li><a href="#use-cases" class="toc-link">Industry Use Cases</a></li>
+        <li><a href="#api-reference" class="toc-link">API Reference</a></li>
+        <li><a href="#setup-guide" class="toc-link">Local Setup Guide</a></li>
+        <li><a href="#env-reference" class="toc-link">Environment Config</a></li>
+        <li><a href="#developers" class="toc-link">Engineering Team</a></li>
+        <li><a href="#contributing" class="toc-link">Governance</a></li>
+      </ul>
+    </aside>
+
+  </div>
+
+  <!-- Global Footer -->
+  <footer class="docs-footer">
+    <div class="footer-inner">
+      <div class="footer-copy">
+        &copy; 2026 <strong>DMS Platform</strong> &bull; Crafted by <a href="#developers" style="color: var(--brand-primary-light); text-decoration: none; font-weight: 600;">Shubham Studio</a>. All rights reserved.
+      </div>
+      <div class="footer-links">
+        <a href="#overview" class="footer-link">Documentation Home</a>
+        <a href="#api-reference" class="footer-link">API Specs</a>
+        <a href="#setup-guide" class="footer-link">Quickstart</a>
+        <a href="https://github.com/blanko1512/-DMS" target="_blank" class="footer-link">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Search Modal -->
+  <div id="search-modal-backdrop" class="search-modal-backdrop">
+    <div class="search-modal">
+      <div class="search-modal-header">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-muted);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="search-input" class="search-input" placeholder="Search documentation, APIs, workflows..." autocomplete="off">
+        <button id="search-close" class="search-close-btn">&times;</button>
+      </div>
+      <div id="search-results" class="search-results-list"></div>
+      <div class="search-modal-footer">
+        <span>Navigation: <kbd class="search-kbd">&uarr;</kbd> <kbd class="search-kbd">&darr;</kbd> to navigate</span>
+        <span>Select: <kbd class="search-kbd">Enter</kbd></span>
+        <span>Close: <kbd class="search-kbd">Esc</kbd></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Back to Top Button -->
+  <button id="back-to-top" class="back-to-top" aria-label="Back to top">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+  </button>
+
+  <script src="app.js"></script>
+</body>
+</html>

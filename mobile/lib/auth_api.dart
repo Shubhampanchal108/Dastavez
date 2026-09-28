@@ -13,6 +13,12 @@ class AuthApi {
 
   final ApiConfig _config;
 
+  String get currentBaseUrl => _config.baseUrl;
+
+  void updateBaseUrl(String url) {
+    _config.baseUrl = url;
+  }
+
   Uri _authEndpoint(String path) => _config.endpoint('/api/auth/$path');
 
   Future<Map<String, dynamic>> login(String email, String password) async {

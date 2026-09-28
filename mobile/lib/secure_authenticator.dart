@@ -15,22 +15,60 @@ class SecureAuthenticator {
   final FlutterSecureStorage storage = const FlutterSecureStorage();
   final LocalAuthentication biometric = LocalAuthentication();
 
-  Future<bool> authenticateBiometric() async {
+  static const _savedEmailKey = 'saved_officer_email';
+  static const _savedPasswordKey = 'saved_officer_password';
+
+  Future<bool> authenticateBiometric({
+    String reason = 'Scan your fingerprint to unlock the DMS Login OTP',
+  }) async {
     final supported = await biometric.isDeviceSupported();
     final canCheck = await biometric.canCheckBiometrics;
 
-    if (!supported || !canCheck) {
-      throw Exception('Biometric authentication is not available');
+    if (!supported && !canCheck) {
+      throw Exception('Biometric authentication is not supported or not configured on this device');
     }
 
-    return biometric.authenticate(
-      localizedReason: 'Authenticate to access the OTP',
-      options: const AuthenticationOptions(
-        biometricOnly: true,
-        stickyAuth: true,
-        useErrorDialogs: true,
-      ),
-    );
+    try {
+      final authenticated = await biometric.authenticate(
+        localizedReason: reason,
+        options: const AuthenticationOptions(
+          biometricOnly: true,
+          stickyAuth: true,
+          useErrorDialogs: true,
+        ),
+      );
+      return authenticated;
+    } catch (e) {
+      try {
+        final authenticated = await biometric.authenticate(
+          localizedReason: reason,
+          options: const AuthenticationOptions(
+            biometricOnly: false,
+            stickyAuth: true,
+            useErrorDialogs: true,
+          ),
+        );
+        return authenticated;
+      } catch (inner) {
+        throw Exception('Biometric verification failed: $inner');
+      }
+    }
+  }
+
+  Future<void> saveCredentials(String email, String password) async {
+    await storage.write(key: _savedEmailKey, value: email);
+    await storage.write(key: _savedPasswordKey, value: password);
+  }
+
+  Future<Map<String, String?>> getSavedCredentials() async {
+    final email = await storage.read(key: _savedEmailKey);
+    final password = await storage.read(key: _savedPasswordKey);
+    return {'email': email, 'password': password};
+  }
+
+  Future<void> clearSavedCredentials() async {
+    await storage.delete(key: _savedEmailKey);
+    await storage.delete(key: _savedPasswordKey);
   }
 
   Future<String> getDeviceId() async {

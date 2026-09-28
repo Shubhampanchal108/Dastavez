@@ -1,6 +1,6 @@
 class ApiConfig {
   ApiConfig({required String baseUrl, required this.production})
-    : baseUrl = _normalize(baseUrl, production);
+    : _baseUrl = _normalize(baseUrl, production);
 
   factory ApiConfig.fromEnvironment() {
     return ApiConfig(
@@ -9,17 +9,25 @@ class ApiConfig {
     );
   }
 
-  final String baseUrl;
+  String _baseUrl;
+  String get baseUrl => _baseUrl;
+  set baseUrl(String url) {
+    _baseUrl = _normalize(url, production);
+  }
+
   final bool production;
 
   Uri endpoint(String path) {
     final normalizedPath = path.startsWith('/') ? path : '/$path';
-    return Uri.parse('$baseUrl$normalizedPath');
+    return Uri.parse('$_baseUrl$normalizedPath');
   }
 
   static String _normalize(String value, bool production) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
+      if (!production) {
+        return 'http://10.0.2.2:8000';
+      }
       throw StateError(
         'API_BASE_URL is required. Pass the backend URL with --dart-define.',
       );

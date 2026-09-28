@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -17,36 +17,84 @@ import {
   Share2,
   Printer,
   Layers,
+  RefreshCw,
 } from 'lucide-react';
-import { useDocuments } from '@/lib/store';
 import { StatusBadge } from '@/components/status-badge';
+import { DmsApi } from '@/lib/api';
+import { DocumentStore } from '@/lib/store';
 
 export default function DocumentViewerPage() {
   const params = useParams();
   const router = useRouter();
-  const docId = (params?.id as string) || 'doc-101';
-  const allDocs = useDocuments();
+  const docId = params?.id as string;
 
-  const doc = allDocs.find((d) => d.id === docId) || allDocs[0];
+  const [doc, setDoc] = useState<any>(null);
+  const [aiData, setAiData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [zoomLevel, setZoomLevel] = useState(100);
   const [copiedText, setCopiedText] = useState(false);
   const [ocrSearch, setOcrSearch] = useState('');
 
+  useEffect(() => {
+    let mounted = true;
+    async function loadData() {
+      setIsLoading(true);
+      try {
+        const res = await DmsApi.getDocument(docId);
+        if (mounted && res.data) {
+          setDoc(res.data);
+        } else {
+          const fallback = DocumentStore.getDocumentById(docId);
+          if (mounted && fallback) setDoc(fallback);
+        }
+
+        const aiRes = await DmsApi.getAiResult(docId);
+        if (mounted && aiRes.data) {
+          setAiData(aiRes.data);
+        }
+      } catch (e) {
+        console.warn('Error loading viewer document', e);
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    }
+    void loadData();
+    return () => { mounted = false; };
+  }, [docId]);
+
+  const rawText = aiData?.raw_text || doc?.description || 'Document content archived in secure digital repository.';
+
   const handleCopyText = () => {
-    if (!doc?.ocr_text) return;
-    navigator.clipboard.writeText(doc.ocr_text);
+    navigator.clipboard.writeText(rawText);
     setCopiedText(true);
     setTimeout(() => setCopiedText(false), 2000);
   };
 
-  if (!doc) {
-    return <div className="p-8 text-center text-slate-500">Document not found</div>;
+  if (isLoading) {
+    return (
+      <div className="h-96 flex flex-col items-center justify-center space-y-3">
+        <RefreshCw className="w-8 h-8 text-blue-600 animate-spin" />
+        <p className="text-xs text-slate-500">Loading document canvas and text layer...</p>
+      </div>
+    );
   }
 
-  const ocrLines = (doc.ocr_text || '').split('\n');
+  if (!doc) {
+    return (
+      <div className="p-12 text-center">
+        <h2 className="text-lg font-bold text-slate-800">Document Not Found</h2>
+        <p className="text-xs text-slate-500 mt-1">Unable to load document viewer for this ID.</p>
+        <button onClick={() => router.back()} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold">
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
+  const ocrLines = rawText.split('\n');
   const filteredLines = ocrSearch
-    ? ocrLines.filter((l) => l.toLowerCase().includes(ocrSearch.toLowerCase()))
+    ? ocrLines.filter((l: string) => l.toLowerCase().includes(ocrSearch.toLowerCase()))
     : ocrLines;
 
   return (
@@ -69,7 +117,7 @@ export default function DocumentViewerPage() {
               <StatusBadge status={doc.status} size="sm" />
             </div>
             <span className="text-[10px] font-mono text-slate-400">
-              {doc.case_id} • SHA-256: {doc.sha256_hash.slice(0, 12)}...
+              {doc.case_id} • SHA-256: {doc.sha256_hash?.slice(0, 12)}...
             </span>
           </div>
         </div>
@@ -98,8 +146,8 @@ export default function DocumentViewerPage() {
 
           <button
             onClick={() => window.print()}
-            className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
-            title="Print Document"
+            className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors border border-slate-700"
+            title="Print Official Record"
           >
             <Printer className="w-4 h-4" />
           </button>
@@ -114,9 +162,9 @@ export default function DocumentViewerPage() {
         </div>
       </div>
 
-      {/* Main Split Screen: Left PDF Preview (55%) + Right OCR Inspector (45%) */}
+      {/* Split Viewer: Left Canvas (55%) + Right OCR Stream (45%) */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left: Document Viewport Simulator */}
+        {/* Left: Rendered Document Stage */}
         <div className="flex-1 bg-slate-800/90 overflow-auto p-8 flex justify-center items-start border-r border-slate-700">
           <div
             style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center' }}
@@ -137,7 +185,7 @@ export default function DocumentViewerPage() {
                     Department of Institutional Security
                   </h2>
                   <p className="text-[10px] text-slate-500 font-semibold mt-0.5">
-                    {doc.department.toUpperCase()}
+                    {doc.department?.toUpperCase()}
                   </p>
                 </div>
                 <div className="text-right">
@@ -151,13 +199,13 @@ export default function DocumentViewerPage() {
             {/* Document Body */}
             <div className="space-y-4 text-xs leading-relaxed text-slate-800 font-serif">
               <h3 className="font-sans font-bold text-sm text-slate-900 border-b border-slate-200 pb-1">
-                {doc.original_filename.replace(/\.[^/.]+$/, '').replace(/_/g, ' ')}
+                {doc.original_filename?.replace(/\.[^/.]+$/, '').replace(/_/g, ' ')}
               </h3>
               <p className="text-[11px] text-slate-600 italic">
-                Registered Ingestion Record • Status: {doc.status} • Classification: {doc.sensitivity}
+                Registered Ingestion Record • Status: {doc.status} • Classification: {doc.sensitivity || 'INTERNAL'}
               </p>
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded font-mono text-[10px] leading-normal text-slate-700">
-                {doc.ocr_text || 'Document content archived in secure digital repository.'}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded font-mono text-[10px] leading-normal text-slate-700 whitespace-pre-wrap">
+                {rawText}
               </div>
             </div>
 
@@ -165,11 +213,11 @@ export default function DocumentViewerPage() {
             <div className="absolute bottom-10 left-12 right-12 pt-4 border-t border-slate-300 flex justify-between items-end text-[9px] text-slate-500 font-mono">
               <div>
                 <p>CRYPTOGRAPHIC HASH VERIFIED</p>
-                <p>{doc.sha256_hash.slice(0, 32)}...</p>
+                <p>{doc.sha256_hash?.slice(0, 32)}...</p>
               </div>
               <div className="text-right">
-                <p>EVM BLOCK #{doc.block_number || '4921842'}</p>
-                <p>OFFICER: {doc.uploader}</p>
+                <p>STORAGE: {doc.storage_provider || 'CLOUDINARY'}</p>
+                <p>OFFICER ID: {doc.uploaded_by || doc.uploader || 'N/A'}</p>
               </div>
             </div>
           </div>
@@ -218,30 +266,13 @@ export default function DocumentViewerPage() {
           </div>
 
           {/* Extracted Text Stream */}
-          <div className="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-1 bg-slate-950/20 leading-relaxed text-slate-300">
-            {filteredLines.length > 0 ? (
-              filteredLines.map((line, idx) => (
-                <div key={idx} className="flex hover:bg-slate-800/50 py-0.5 px-1 rounded">
-                  <span className="w-8 text-[10px] text-slate-600 select-none shrink-0">
-                    {(idx + 1).toString().padStart(2, '0')}
-                  </span>
-                  <span className="flex-1">{line}</span>
-                </div>
-              ))
-            ) : (
-              <p className="text-slate-500 text-xs text-center py-8">No matching text lines found.</p>
-            )}
-          </div>
-
-          {/* Integrity Seal Bar */}
-          <div className="p-3 bg-[#07111E] border-t border-slate-800 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5 text-emerald-400">
-              <ShieldCheck className="w-4 h-4" />
-              <span className="font-semibold text-[11px]">SHA-256 Verified Match</span>
-            </div>
-            <span className="text-[10px] text-slate-400 font-mono">
-              Length: {doc.ocr_text?.length || 0} characters
-            </span>
+          <div className="flex-1 overflow-y-auto p-4 space-y-1 font-mono text-[11px] leading-relaxed text-slate-300 select-text">
+            {filteredLines.map((line: string, idx: number) => (
+              <div key={idx} className="flex gap-3 hover:bg-slate-800/50 px-2 py-0.5 rounded">
+                <span className="text-slate-600 select-none w-8 text-right shrink-0">{idx + 1}</span>
+                <span className="text-slate-200 break-all">{line || ' '}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>

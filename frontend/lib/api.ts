@@ -67,6 +67,7 @@ function isPublicApiEndpoint(endpoint: string) {
     '/health',
     '/health/db',
     '/api/auth/login',
+    '/api/auth/register',
     '/api/auth/verify-otp',
     '/api/auth/mobile/reveal-otp',
   ].includes(cleanEndpoint);
@@ -107,7 +108,7 @@ export async function apiRequest<T = any>(
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s timeout
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
   try {
     const response = await fetch(url, {
@@ -160,6 +161,13 @@ export const DmsApi = {
   },
 
   // Authentication
+  async register(payload: { name: string; email: string; password: string; role?: string }) {
+    return apiRequest('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
   async login(email: string, password: string) {
     const res = await apiRequest('/api/auth/login', {
       method: 'POST',
@@ -270,6 +278,17 @@ export const DmsApi = {
 
   async getVersions(documentId: string) {
     return apiRequest(`/api/documents/${documentId}/versions`);
+  },
+
+  async uploadVersion(documentId: string, formData: FormData) {
+    return apiRequest(`/api/documents/${documentId}/versions`, {
+      method: 'POST',
+      body: formData,
+    });
+  },
+
+  async storageCheck(documentId: string) {
+    return apiRequest(`/api/documents/${documentId}/storage-check`);
   },
 
   // Shares
