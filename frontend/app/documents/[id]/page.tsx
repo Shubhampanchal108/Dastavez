@@ -120,12 +120,12 @@ export default function DocumentDetailPage() {
       const res = await DmsApi.classifyDocument(doc.id);
       if (res.data) {
         setAiData(res.data);
-        setActionSuccessMsg(`AI classification complete! Confidence: ${res.data.accuracy_percentage || '96.5%'}. Stored in PostgreSQL.`);
+        setActionSuccessMsg(`Document analysis complete! Confidence: ${res.data.accuracy_percentage || '96.5%'}. Saved to official vault.`);
       } else {
-        setActionErrorMsg(res.error || 'AI classification could not be processed.');
+        setActionErrorMsg(res.error || 'Document analysis could not be completed.');
       }
     } catch (e: any) {
-      setActionErrorMsg(e?.message || 'AI service error.');
+      setActionErrorMsg(e?.message || 'Intelligence service unavailable.');
     } finally {
       setIsAiLoading(false);
     }
@@ -140,10 +140,10 @@ export default function DocumentDetailPage() {
     try {
       const res = await DmsApi.extractText(doc.id);
       if (res.data) {
-        setActionSuccessMsg(`Text extracted successfully (${res.data.text_length || 0} characters extracted via ${res.data.extraction_method || 'PyMuPDF'}).`);
+        setActionSuccessMsg(`Document text extracted successfully (${res.data.text_length || 0} characters indexed).`);
         await loadData();
       } else {
-        setActionErrorMsg(res.error || 'Text extraction failed. Confirm document is PDF.');
+        setActionErrorMsg(res.error || 'Text extraction failed. Confirm document format.');
       }
     } catch (e: any) {
       setActionErrorMsg(e?.message || 'Text extraction failed.');
@@ -160,7 +160,7 @@ export default function DocumentDetailPage() {
     try {
       const res = await DmsApi.validateRequiredFields(doc.id);
       if (res.data) {
-        setActionSuccessMsg(`Validation result: ${res.data.validation_status || 'COMPLETE'}. Missing fields: ${res.data.missing_fields?.length || 0}`);
+        setActionSuccessMsg(`Validation result: ${res.data.validation_status || 'COMPLETE'}.`);
         await loadData();
       } else {
         setActionErrorMsg(res.error || 'Required fields validation failed.');
@@ -180,13 +180,13 @@ export default function DocumentDetailPage() {
       const res = await DmsApi.createBlockchainProof(doc.id);
       if (res.data) {
         setBlockchainProof(res.data);
-        setActionSuccessMsg(`Cryptographic proof anchored! Tx: ${res.data.transaction_hash?.slice(0, 20)}...`);
+        setActionSuccessMsg('Permanent evidence seal registered successfully in official ledger!');
         await loadData();
       } else {
-        setActionErrorMsg(res.error || 'Blockchain proof creation failed.');
+        setActionErrorMsg(res.error || 'Evidence registry proof creation failed.');
       }
     } catch (e: any) {
-      setActionErrorMsg(e?.message || 'Blockchain anchoring failed.');
+      setActionErrorMsg(e?.message || 'Evidence registry connection error.');
     } finally {
       setIsBlockchainLoading(false);
     }
@@ -196,8 +196,8 @@ export default function DocumentDetailPage() {
     return (
       <div className="p-16 text-center space-y-3">
         <RefreshCw className="w-8 h-8 text-blue-600 animate-spin mx-auto" />
-        <h2 className="text-sm font-bold text-slate-800">Retrieving Document from Database...</h2>
-        <p className="text-xs text-slate-500">Querying PostgreSQL, Cloudinary metadata, and AI stores.</p>
+        <h2 className="text-sm font-bold text-slate-800">Loading Case Document...</h2>
+        <p className="text-xs text-slate-500">Accessing official evidence vault records.</p>
       </div>
     );
   }
@@ -304,7 +304,7 @@ export default function DocumentDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column */}
         <div className="lg:col-span-8 space-y-6">
-          {/* AI Intelligence & PostgreSQL Extraction Card */}
+          {/* AI Intelligence & Case Extraction Card */}
           <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs relative overflow-hidden">
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
@@ -313,10 +313,10 @@ export default function DocumentDetailPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">
-                    PostgreSQL AI Classification & NER Intelligence
+                    Intelligent Case Document Analysis
                   </h3>
                   <p className="text-[11px] text-slate-500">
-                    Model: {aiData?.model || 'qwen-2.5-32b (Groq)'} • Storage: PostgreSQL
+                    Automated Information Extraction • Official Vault Record
                   </p>
                 </div>
               </div>
@@ -328,7 +328,7 @@ export default function DocumentDetailPage() {
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors"
                 >
                   <FileText className="w-3.5 h-3.5" />
-                  <span>Extract OCR</span>
+                  <span>Extract Text</span>
                 </button>
                 <button
                   onClick={handleRunAiAnalysis}
@@ -336,7 +336,7 @@ export default function DocumentDetailPage() {
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs font-semibold transition-colors"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isAiLoading ? 'animate-spin' : ''}`} />
-                  <span>{isAiLoading ? 'Analyzing...' : 'Re-Run AI Analysis'}</span>
+                  <span>{isAiLoading ? 'Analyzing...' : 'Re-Analyze Document'}</span>
                 </button>
               </div>
             </div>
@@ -345,7 +345,7 @@ export default function DocumentDetailPage() {
             <div className="grid grid-cols-3 gap-3 mb-5">
               <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">
-                  AI ACCURACY / CONFIDENCE
+                  ANALYSIS CONFIDENCE
                 </span>
                 <span className="text-xl font-extrabold text-purple-700">
                   {aiData?.accuracy_percentage
@@ -379,7 +379,7 @@ export default function DocumentDetailPage() {
             {/* Extracted Entities Table */}
             <div className="border border-slate-100 rounded-lg overflow-hidden">
               <div className="bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 border-b border-slate-100 flex items-center justify-between">
-                <span>Extracted Metadata Entities from PostgreSQL Database</span>
+                <span>Extracted Case Details & Key Information</span>
                 <button
                   onClick={handleValidateRequiredFields}
                   className="text-[11px] text-blue-600 hover:underline font-semibold"
@@ -399,7 +399,7 @@ export default function DocumentDetailPage() {
                 <div className="px-3 py-2 flex items-center justify-between">
                   <span className="text-slate-500 font-medium">Filing Officer ID</span>
                   <span className="font-mono text-slate-800">
-                    {doc.uploaded_by || doc.uploader || 'Institutional Officer'}
+                    {doc.uploaded_by || doc.uploader || 'Duty Officer'}
                   </span>
                 </div>
                 <div className="px-3 py-2 flex items-center justify-between">
@@ -418,16 +418,16 @@ export default function DocumentDetailPage() {
 
           {/* Quick Navigation Cards Grid */}
           <div>
-            <h3 className="text-sm font-bold text-slate-900 mb-3">Evidentiary Modules & Live Database Actions</h3>
+            <h3 className="text-sm font-bold text-slate-900 mb-3">Case File Actions & Verification Modules</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <Link
                 href={`/blockchain?id=${doc.id}`}
                 className="p-4 rounded-xl bg-white border border-slate-200 hover:border-blue-500 hover:shadow-xs transition-all text-left group"
               >
                 <Blocks className="w-5 h-5 text-indigo-600 mb-2 group-hover:scale-110 transition-transform" />
-                <span className="block text-xs font-bold text-slate-900">Blockchain Proof</span>
+                <span className="block text-xs font-bold text-slate-900">Evidence Ledger</span>
                 <span className="text-[10px] text-slate-500">
-                  {blockchainProof?.integrity_status === 'VERIFIED' ? 'Verified On-Chain' : 'Audit smart contract'}
+                  {blockchainProof?.integrity_status === 'VERIFIED' ? 'Verified in Registry' : 'Official ledger record'}
                 </span>
               </Link>
               <Link
@@ -436,7 +436,7 @@ export default function DocumentDetailPage() {
               >
                 <GitPullRequest className="w-5 h-5 text-blue-600 mb-2 group-hover:scale-110 transition-transform" />
                 <span className="block text-xs font-bold text-slate-900">Custody Chain</span>
-                <span className="text-[10px] text-slate-500">Chain-of-custody log</span>
+                <span className="text-[10px] text-slate-500">Handover log</span>
               </Link>
               <Link
                 href={`/versions?id=${doc.id}`}
@@ -444,7 +444,7 @@ export default function DocumentDetailPage() {
               >
                 <History className="w-5 h-5 text-emerald-600 mb-2 group-hover:scale-110 transition-transform" />
                 <span className="block text-xs font-bold text-slate-900">Versions</span>
-                <span className="text-[10px] text-slate-500">History & New revision</span>
+                <span className="text-[10px] text-slate-500">Revision history</span>
               </Link>
               <Link
                 href={`/duplicates?id=${doc.id}`}
@@ -453,41 +453,41 @@ export default function DocumentDetailPage() {
                 <Copy className="w-5 h-5 text-amber-600 mb-2 group-hover:scale-110 transition-transform" />
                 <span className="block text-xs font-bold text-slate-900">Duplicates</span>
                 <span className="text-[10px] text-slate-500">
-                  {duplicateCount !== null ? `${duplicateCount} duplicate(s) in DB` : 'SHA-256 match scan'}
+                  {duplicateCount !== null ? `${duplicateCount} duplicate(s) found` : 'Check duplicates'}
                 </span>
               </Link>
             </div>
           </div>
 
-          {/* OCR Extracted Text Preview */}
+          {/* Extracted Document Text Preview */}
           <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-slate-900">Extracted Document Text (OCR)</h3>
+              <h3 className="text-sm font-bold text-slate-900">Extracted Case Document Text</h3>
               <Link
                 href={`/documents/${doc.id}/viewer`}
                 className="text-xs font-semibold text-blue-600 hover:underline"
               >
-                Open Full OCR Inspector
+                Open Full Document Viewer
               </Link>
             </div>
             <pre className="p-4 bg-slate-50 rounded-lg text-xs font-mono text-slate-700 whitespace-pre-wrap leading-relaxed border border-slate-200/80 max-h-48 overflow-y-auto">
-              {aiData?.raw_text || doc.description || 'No extracted text is currently stored for this document. Click "Extract OCR" to trigger backend extraction.'}
+              {aiData?.raw_text || doc.description || 'No extracted text is currently stored for this document. Click "Extract Text" to scan.'}
             </pre>
           </div>
         </div>
 
         {/* Right Column */}
         <div className="lg:col-span-4 space-y-6">
-          {/* Cryptographic SHA-256 Seal Card */}
+          {/* Digital Evidence Seal Card */}
           <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-4">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-emerald-600" />
-              <h3 className="text-sm font-bold text-slate-900">Cryptographic Seal</h3>
+              <h3 className="text-sm font-bold text-slate-900">Digital Evidence Seal</h3>
             </div>
 
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                SHA-256 Checksum
+                Security Fingerprint / Seal ID
               </label>
               <div className="relative">
                 <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-200 font-mono text-[11px] text-slate-800 break-all leading-relaxed">
@@ -505,7 +505,7 @@ export default function DocumentDetailPage() {
                   ) : (
                     <>
                       <Copy className="w-3.5 h-3.5" />
-                      <span>Copy Full SHA-256</span>
+                      <span>Copy Security Seal</span>
                     </>
                   )}
                 </button>
@@ -514,7 +514,7 @@ export default function DocumentDetailPage() {
 
             <div className="border-t border-slate-100 pt-3 space-y-2 text-xs">
               <div className="flex justify-between">
-                <span className="text-slate-500">MIME Type</span>
+                <span className="text-slate-500">Document Format</span>
                 <span className="font-mono text-slate-800 font-semibold">{doc.mime_type}</span>
               </div>
               <div className="flex justify-between">
@@ -524,19 +524,11 @@ export default function DocumentDetailPage() {
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Storage Provider</span>
-                <span className="font-semibold text-blue-600">{doc.storage_provider || 'Cloudinary'}</span>
+                <span className="text-slate-500">Storage Status</span>
+                <span className="font-semibold text-emerald-600">Secured in Official Vault</span>
               </div>
-              {storageInfo?.cloudinary_public_id && (
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Cloudinary ID</span>
-                  <span className="font-mono text-[10px] text-slate-700 truncate max-w-[150px]">
-                    {storageInfo.cloudinary_public_id}
-                  </span>
-                </div>
-              )}
               <div className="flex justify-between">
-                <span className="text-slate-500">Ingestion Date</span>
+                <span className="text-slate-500">Registration Date</span>
                 <span className="text-slate-800 font-semibold">
                   {doc.created_at ? new Date(doc.created_at).toLocaleString() : 'N/A'}
                 </span>
@@ -544,27 +536,27 @@ export default function DocumentDetailPage() {
             </div>
           </div>
 
-          {/* Blockchain Proof Card */}
+          {/* Permanent Evidence Registry Card */}
           <div className="bg-gradient-to-br from-indigo-950 to-slate-900 text-white rounded-xl p-5 shadow-xs border border-indigo-900 space-y-3">
             <div className="flex items-center gap-2">
               <Blocks className="w-5 h-5 text-indigo-400" />
-              <h3 className="text-sm font-bold">Ethereum EVM Anchor</h3>
+              <h3 className="text-sm font-bold">Permanent Evidence Registry</h3>
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed">
-              Cryptographically registered in Solidity Smart Contract ledger with immutable timestamp.
+              Officially registered in tamper-proof evidence ledger with certified legal timestamp.
             </p>
 
             <div className="space-y-2 text-xs pt-1">
               <div className="flex justify-between">
-                <span className="text-slate-400">Proof Status</span>
+                <span className="text-slate-400">Registry Status</span>
                 <span className="font-bold text-emerald-400">
-                  {blockchainProof?.integrity_status || 'NOT_ANCHORED'}
+                  {blockchainProof?.integrity_status || 'NOT_REGISTERED'}
                 </span>
               </div>
               {blockchainProof?.transaction_hash && (
                 <div>
-                  <span className="text-slate-400 block text-[10px] mb-0.5">Tx Hash</span>
+                  <span className="text-slate-400 block text-[10px] mb-0.5">Registry Reference</span>
                   <span className="font-mono text-[10px] text-blue-300 break-all block">
                     {blockchainProof.transaction_hash}
                   </span>
@@ -581,12 +573,12 @@ export default function DocumentDetailPage() {
                 {isBlockchainLoading ? (
                   <>
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Anchoring to Block...</span>
+                    <span>Registering Proof...</span>
                   </>
                 ) : (
                   <>
                     <Blocks className="w-3.5 h-3.5" />
-                    <span>Create / Anchor Blockchain Proof</span>
+                    <span>Register Permanent Evidence Seal</span>
                   </>
                 )}
               </button>
@@ -594,7 +586,7 @@ export default function DocumentDetailPage() {
                 href={`/blockchain?id=${doc.id}`}
                 className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors"
               >
-                <span>Full Blockchain Auditor</span>
+                <span>View Evidence Ledger</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </Link>
             </div>

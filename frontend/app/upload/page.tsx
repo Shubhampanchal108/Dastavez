@@ -161,10 +161,10 @@ export default function UploadPage() {
       <div>
         <div className="flex items-center gap-2">
           <UploadCloud className="w-5 h-5 text-blue-600" />
-          <h1 className="text-xl font-bold text-slate-900">Ingest New Evidence Document</h1>
+          <h1 className="text-xl font-bold text-slate-900">Upload New Case Evidence Document</h1>
         </div>
         <p className="text-xs text-slate-500 mt-1">
-          Cryptographic ingestion pipeline with real-time SHA-256 verification, Cloudinary storage, and Groq AI classification.
+          Secure document registration with automatic authenticity seal, case indexing, and intelligence analysis.
         </p>
       </div>
 
@@ -172,10 +172,10 @@ export default function UploadPage() {
       <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
         <div className="flex items-center justify-between">
           {[
-            { num: 1, title: '1. File Source' },
-            { num: 2, title: '2. Case Metadata' },
-            { num: 3, title: '3. Ingestion Pipeline' },
-            { num: 4, title: '4. AI Review & Stored' },
+            { num: 1, title: '1. Select Document' },
+            { num: 2, title: '2. Case Details' },
+            { num: 3, title: '3. Security Processing' },
+            { num: 4, title: '4. Review & Confirmation' },
           ].map((s) => (
             <div key={s.num} className="flex items-center gap-2">
               <div
@@ -205,9 +205,9 @@ export default function UploadPage() {
       {step === 1 && (
         <div className="space-y-6 bg-white rounded-xl border border-slate-200 p-6 shadow-xs">
           <div>
-            <h2 className="text-sm font-bold text-slate-900">Select Document for Evidence Locker</h2>
+            <h2 className="text-sm font-bold text-slate-900">Select Document for Evidence Vault</h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Supported file types: PDF, DOCX, PNG, JPG. Files are stored in Cloudinary and hashed with SHA-256.
+              Supported file types: PDF, DOCX, PNG, JPG. Files are stored securely and verified with a tamper-proof digital seal.
             </p>
           </div>
 
@@ -226,7 +226,7 @@ export default function UploadPage() {
               <span className="text-blue-600 underline">browse workstation</span>
             </p>
             <p className="text-[11px] text-slate-400 mt-1">
-              Tamper-evident SHA-256 hash is calculated client-side before submission.
+              A unique digital security seal is generated to guarantee record authenticity.
             </p>
           </div>
 
@@ -243,7 +243,7 @@ export default function UploadPage() {
                 </span>
               </div>
               <div className="flex items-center gap-2 text-[11px]">
-                <span className="font-semibold text-slate-600">Calculated SHA-256:</span>
+                <span className="font-semibold text-slate-600">Digital Security Seal:</span>
                 <span className="font-mono text-blue-700 truncate">{selectedFile.hash}</span>
               </div>
             </div>
@@ -255,7 +255,7 @@ export default function UploadPage() {
               disabled={!selectedFile.file}
               className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold shadow-xs transition-colors"
             >
-              <span>Next: Metadata Specification</span>
+              <span>Next: Enter Case Details</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -353,7 +353,7 @@ export default function UploadPage() {
               onClick={handleStartProcessing}
               className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-colors"
             >
-              <span>Execute Ingestion & AI Pipeline</span>
+              <span>Submit & Secure Document</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -368,8 +368,8 @@ export default function UploadPage() {
           </div>
 
           <div>
-            <h2 className="text-base font-bold text-slate-900">Ingesting Document Into System</h2>
-            <p className="text-xs text-slate-500 mt-1">Executing live zero-trust pipeline on backend...</p>
+            <h2 className="text-base font-bold text-slate-900">Securing Document in Official Vault</h2>
+            <p className="text-xs text-slate-500 mt-1">Processing and verifying case record...</p>
           </div>
 
           {/* Progress Bar */}
@@ -384,7 +384,7 @@ export default function UploadPage() {
             <div className="w-full max-w-md mx-auto p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs text-left space-y-2">
               <div className="flex items-center gap-2 font-bold text-rose-900">
                 <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>Ingestion Failure</span>
+                <span>Upload Failed</span>
               </div>
               <p>{pipelineError}</p>
               <div className="pt-2 flex gap-2">
@@ -392,13 +392,13 @@ export default function UploadPage() {
                   onClick={() => setStep(2)}
                   className="px-3 py-1.5 rounded-lg bg-white border border-rose-300 text-rose-900 text-xs font-semibold"
                 >
-                  Edit Metadata
+                  Edit Details
                 </button>
                 <button
                   onClick={handleStartProcessing}
                   className="px-3 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-semibold"
                 >
-                  Retry Ingestion
+                  Retry Upload
                 </button>
               </div>
             </div>
@@ -408,10 +408,10 @@ export default function UploadPage() {
           {!pipelineError && (
             <div className="w-full max-w-md mx-auto space-y-2 text-left text-xs">
               {[
-                'Uploading document to Cloudinary & saving metadata in PostgreSQL...',
-                'Extracting text layer and PDF OCR normalization...',
-                'AI classification & entity extraction via Groq model...',
-                'Validating required fields and consistency checks...',
+                'Storing document and recording case details in secure vault...',
+                'Reading and indexing text content for search...',
+                'Analyzing case details and classifying document type...',
+                'Validating record compliance and security integrity...',
               ].map((msg, i) => (
                 <div
                   key={i}
@@ -446,9 +446,9 @@ export default function UploadPage() {
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900">Document Successfully Ingested</h2>
+              <h2 className="text-base font-bold text-slate-900">Document Successfully Registered</h2>
               <p className="text-xs text-slate-500">
-                Stored in PostgreSQL database and Cloudinary storage with tamper-evident SHA-256 fingerprint.
+                Securely saved in official evidence vault with an authenticated tamper-proof digital seal.
               </p>
             </div>
           </div>
@@ -457,7 +457,7 @@ export default function UploadPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
               <span className="text-[10px] font-bold text-purple-600 uppercase tracking-wider block mb-1">
-                AI Confidence Score
+                Classification Match
               </span>
               <span className="text-2xl font-black text-purple-900">
                 {aiResult?.accuracy_percentage
@@ -473,24 +473,24 @@ export default function UploadPage() {
 
             <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200">
               <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block mb-1">
-                Integrity Status
+                Authenticity Status
               </span>
               <span className="text-lg font-bold text-emerald-900 flex items-center gap-1">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                <span>SHA-256 Validated</span>
+                <span>Tamper-Proof Verified</span>
               </span>
-              <p className="text-[11px] text-emerald-700 mt-1">Zero Collision Match</p>
+              <p className="text-[11px] text-emerald-700 mt-1">Unique Case Record</p>
             </div>
 
             <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-200">
               <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block mb-1">
-                Storage Provider
+                Vault Status
               </span>
               <span className="text-lg font-bold text-indigo-900 flex items-center gap-1">
                 <Blocks className="w-5 h-5 text-indigo-600" />
-                <span>Cloudinary Vault</span>
+                <span>Secured in Vault</span>
               </span>
-              <p className="text-[11px] text-indigo-700 mt-1">Secured in PostgreSQL</p>
+              <p className="text-[11px] text-indigo-700 mt-1">Official Permanent Record</p>
             </div>
           </div>
 
@@ -509,7 +509,7 @@ export default function UploadPage() {
               <span className="font-mono font-bold text-blue-700">{metadata.caseId}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">SHA-256 Hash:</span>
+              <span className="text-slate-500">Security Seal:</span>
               <span className="font-mono text-slate-700 break-all">{selectedFile.hash}</span>
             </div>
             <div className="flex justify-between">
@@ -532,7 +532,7 @@ export default function UploadPage() {
                   className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-600/30 transition-all"
                 >
                   <Eye className="w-4 h-4" />
-                  <span>Inspect Ingested Document</span>
+                  <span>View Case Document</span>
                 </Link>
               )}
             </div>

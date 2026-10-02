@@ -28,32 +28,32 @@ import { useCurrentOfficer } from '@/lib/store';
 
 const NAV_SECTIONS = [
   {
-    title: 'Core Repository',
+    title: 'Case Records',
     items: [
       { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-      { name: 'Documents', href: '/documents', icon: Files },
-      { name: 'Ingest Document', href: '/upload', icon: UploadCloud, highlight: true },
-      { name: 'Advanced Search', href: '/search', icon: Search },
-      { name: 'Explore & Tags', href: '/explore', icon: Compass },
+      { name: 'Case Files', href: '/documents', icon: Files },
+      { name: 'Add Case Record', href: '/upload', icon: UploadCloud, highlight: true },
+      { name: 'Case Search', href: '/search', icon: Search },
+      { name: 'Browse Categories', href: '/explore', icon: Compass },
     ],
   },
   {
-    title: 'Evidence & Integrity',
+    title: 'Evidence & Verification',
     items: [
-      { name: 'Hash Verifier', href: '/integrity', icon: Fingerprint },
-      { name: 'Blockchain Ledger', href: '/blockchain', icon: Blocks },
-      { name: 'Chain of Custody', href: '/custody', icon: GitPullRequest },
+      { name: 'Tamper Verification', href: '/integrity', icon: Fingerprint },
+      { name: 'Evidence Ledger', href: '/blockchain', icon: Blocks },
+      { name: 'Custody Chain', href: '/custody', icon: GitPullRequest },
       { name: 'Version History', href: '/versions', icon: History },
-      { name: 'Exact Duplicates', href: '/duplicates', icon: Copy },
+      { name: 'Duplicate Check', href: '/duplicates', icon: Copy },
     ],
   },
   {
-    title: 'Governance & Ops',
+    title: 'Case Management',
     items: [
-      { name: 'Secure Shares', href: '/shares', icon: Share2 },
-      { name: 'Shared With Me', href: '/shared-with-me', icon: Inbox },
-      { name: 'Disaster Recovery', href: '/backup', icon: DatabaseBackup },
-      { name: 'Audit Trail', href: '/audit', icon: ScrollText },
+      { name: 'Share Records', href: '/shares', icon: Share2 },
+      { name: 'Received Records', href: '/shared-with-me', icon: Inbox },
+      { name: 'Backup & Recovery', href: '/backup', icon: DatabaseBackup },
+      { name: 'Activity Log', href: '/audit', icon: ScrollText },
     ],
   },
   {

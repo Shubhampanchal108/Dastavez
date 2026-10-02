@@ -31,17 +31,17 @@ export default function SecurityPage() {
       <div>
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-5 h-5 text-blue-600" />
-          <h1 className="text-xl font-bold text-slate-900">Security & Cryptography Configuration</h1>
+          <h1 className="text-xl font-bold text-slate-900">Security & Vault Access Configuration</h1>
         </div>
         <p className="text-xs text-slate-500 mt-1">
-          Configure multi-factor authentication, cryptographic endpoints, and session security policies.
+          Configure officer authentication, secure server connection, and terminal security policies.
         </p>
       </div>
 
       {savedBanner && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 text-xs flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span>Security parameters and API configuration saved successfully.</span>
+          <span>Security parameters and connection configuration saved successfully.</span>
         </div>
       )}
 
@@ -50,12 +50,12 @@ export default function SecurityPage() {
         <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
             <Server className="w-4 h-4 text-blue-600" />
-            <h2 className="text-sm font-bold text-slate-900">FastAPI Backend API Server</h2>
+            <h2 className="text-sm font-bold text-slate-900">Secure Vault Server Connection</h2>
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Backend REST Origin URL
+              Vault Server Address
             </label>
             <input
               type="text"
@@ -65,7 +65,7 @@ export default function SecurityPage() {
               placeholder="http://127.0.0.1:8000"
             />
             <p className="text-[11px] text-slate-400 mt-1">
-              Default local API server for FastAPI endpoints, OCR pipeline, and PostgreSQL database.
+              Network address for the official case management vault and secure document processing services.
             </p>
           </div>
         </div>
@@ -80,7 +80,7 @@ export default function SecurityPage() {
           <div className="flex items-center justify-between py-2 border-b border-slate-100 text-xs">
             <div>
               <p className="font-semibold text-slate-900">Enforce 2FA OTP Authentication</p>
-              <p className="text-slate-500">Require cryptographic challenge verification on every officer sign-in.</p>
+              <p className="text-slate-500">Require official one-time security verification code on every officer sign-in.</p>
             </div>
             <input
               type="checkbox"

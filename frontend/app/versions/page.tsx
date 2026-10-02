@@ -114,10 +114,10 @@ function VersionsContent() {
         <div>
           <div className="flex items-center gap-2">
             <History className="w-5 h-5 text-emerald-600" />
-            <h1 className="text-xl font-bold text-slate-900">Document Version History & Diff Ledger</h1>
+            <h1 className="text-xl font-bold text-slate-900">Document Version History & Revision Log</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Inspect immutable revisions, compare cryptographic delta changes, and record new versions in PostgreSQL.
+            Review official case revisions, track document updates, and save new versions in the evidence vault.
           </p>
         </div>
 
@@ -206,7 +206,7 @@ function VersionsContent() {
                   </span>
                   {v.is_latest && (
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                      CURRENT PRODUCTION HEAD
+                      ACTIVE OFFICIAL RECORD
                     </span>
                   )}
                   <span className="text-xs font-bold text-slate-900">{v.original_filename}</span>
@@ -224,7 +224,7 @@ function VersionsContent() {
 
               <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-500 border-t border-slate-100 pt-2 font-mono">
                 <div>
-                  <span className="text-slate-400">SHA-256: </span>
+                  <span className="text-slate-400">Seal ID: </span>
                   <span className="text-slate-700">{v.sha256_hash ? `${v.sha256_hash.slice(0, 16)}...` : 'N/A'}</span>
                 </div>
                 <div>
@@ -233,7 +233,7 @@ function VersionsContent() {
                 </div>
                 <div>
                   <span className="text-slate-400">Status: </span>
-                  <span className="font-bold text-emerald-600">{v.status || 'COMMITTED'}</span>
+                  <span className="font-bold text-emerald-600">{v.status || 'VERIFIED'}</span>
                 </div>
               </div>
             </div>
@@ -305,7 +305,7 @@ function VersionsContent() {
                     <span>Uploading...</span>
                   </>
                 ) : (
-                  <span>Commit New Revision</span>
+                  <span>Save New Revision</span>
                 )}
               </button>
             </div>
@@ -318,7 +318,7 @@ function VersionsContent() {
 
 export default function VersionsPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-500">Loading version control...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-500">Loading revision history...</div>}>
       <VersionsContent />
     </Suspense>
   );

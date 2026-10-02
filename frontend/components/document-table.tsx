@@ -53,10 +53,10 @@ export function DocumentTable({ documents, onSelectDoc }: DocumentTableProps) {
             <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
               <th className="py-3 px-4">Document / Case</th>
               <th className="py-3 px-4">Type & Department</th>
-              <th className="py-3 px-4">Sensitivity</th>
-              <th className="py-3 px-4">SHA-256 Checksum</th>
+              <th className="py-3 px-4">Clearance</th>
+              <th className="py-3 px-4">Security Seal ID</th>
               <th className="py-3 px-4">Status</th>
-              <th className="py-3 px-4">Ledger Proof</th>
+              <th className="py-3 px-4">Registry Proof</th>
               <th className="py-3 px-4">Date</th>
               <th className="py-3 px-4 text-right">Actions</th>
             </tr>
@@ -122,11 +122,11 @@ export function DocumentTable({ documents, onSelectDoc }: DocumentTableProps) {
                     </span>
                   </td>
 
-                  {/* SHA-256 */}
+                  {/* Security Seal */}
                   <td className="py-3.5 px-4">
                     <button
                       onClick={(e) => handleCopyHash(doc.sha256_hash, e)}
-                      title="Click to copy full SHA-256"
+                      title="Copy Security Seal ID"
                       className="inline-flex items-center gap-1.5 font-mono text-[11px] text-slate-600 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-sm border border-slate-200/80 transition-colors"
                     >
                       <span>
@@ -145,7 +145,7 @@ export function DocumentTable({ documents, onSelectDoc }: DocumentTableProps) {
                     <StatusBadge status={doc.status} size="sm" />
                   </td>
 
-                  {/* Blockchain */}
+                  {/* Blockchain Registry */}
                   <td className="py-3.5 px-4">
                     {doc.block_number ? (
                       <Link
@@ -157,7 +157,7 @@ export function DocumentTable({ documents, onSelectDoc }: DocumentTableProps) {
                         <span>#{doc.block_number}</span>
                       </Link>
                     ) : (
-                      <span className="text-[11px] text-slate-400 italic">Unanchored</span>
+                      <span className="text-[11px] text-slate-400 italic">Pending Seal</span>
                     )}
                   </td>
 
@@ -181,14 +181,14 @@ export function DocumentTable({ documents, onSelectDoc }: DocumentTableProps) {
                       </Link>
                       <Link
                         href={`/integrity?id=${doc.id}`}
-                        title="Verify Hash & Tamper Status"
+                        title="Verify Document Authenticity"
                         className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
                       >
                         <Fingerprint className="w-4 h-4" />
                       </Link>
                       <Link
                         href={`/shares?id=${doc.id}`}
-                        title="Create Secure Share Link"
+                        title="Share Record"
                         className="p-1.5 rounded-lg text-slate-500 hover:text-purple-600 hover:bg-purple-50 transition-colors"
                       >
                         <Share2 className="w-4 h-4" />

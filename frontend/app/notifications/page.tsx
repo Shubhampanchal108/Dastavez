@@ -42,13 +42,13 @@ export default function NotificationsPage() {
           title = 'Document Share Event';
         } else if (log.action.includes('BLOCKCHAIN')) {
           category = 'BLOCKCHAIN';
-          title = 'Blockchain Ledger Anchor';
+          title = 'Official Evidence Registry Seal';
         } else if (log.action.includes('VALIDAT') || log.action.includes('AI')) {
           category = 'VALIDATION';
-          title = 'Compliance & AI Classification';
+          title = 'Case Classification & Analysis';
         } else if (log.action.includes('INTEGRITY') || log.action.includes('HASH')) {
           category = 'INTEGRITY';
-          title = 'Cryptographic Integrity Check';
+          title = 'Document Tamper & Authenticity Check';
         }
 
         return {
@@ -96,7 +96,7 @@ export default function NotificationsPage() {
             <h1 className="text-xl font-bold text-slate-900">Notifications Center</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Real-time notifications synchronized with institutional PostgreSQL audit logs.
+            Real-time alerts and official updates synchronized with case activity records.
           </p>
         </div>
       </div>

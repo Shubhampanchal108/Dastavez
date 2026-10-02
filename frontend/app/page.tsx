@@ -69,13 +69,13 @@ export default function DashboardPage() {
         <div className="relative z-10">
           <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-semibold mb-2 border border-blue-400/30">
             <Shield className="w-3.5 h-3.5" />
-            <span>Digital Locker & Evidence Vault • PostgreSQL Live</span>
+            <span>Digital Evidence & Case Record Vault • Operational</span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight">
             Welcome back, {officer.name}
           </h1>
           <p className="text-sm text-slate-300 mt-1 max-w-xl">
-            Authenticated role: <span className="font-semibold text-white">{officer.role}</span>
+            Authorized Clearance: <span className="font-semibold text-white">{officer.role}</span>
           </p>
         </div>
 
@@ -85,7 +85,7 @@ export default function DashboardPage() {
             onClick={handleRefresh}
             disabled={isRefreshing}
             className="inline-flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/20 transition-all"
-            title="Refresh database records"
+            title="Synchronize case records"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span>Sync</span>
@@ -95,14 +95,14 @@ export default function DashboardPage() {
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md shadow-blue-600/30 transition-all hover:scale-[1.02]"
           >
             <UploadCloud className="w-4 h-4" />
-            <span>Ingest Document</span>
+            <span>Add Case Record</span>
           </Link>
           <Link
             href="/search"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-xs border border-white/20 transition-all"
           >
             <Search className="w-4 h-4" />
-            <span>Deep Search</span>
+            <span>Case Search</span>
           </Link>
         </div>
 
@@ -113,33 +113,33 @@ export default function DashboardPage() {
       {/* KPI Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <MetricCard
-          title="Documents in Vault"
+          title="Case Records in Vault"
           value={documentsStatus.loading ? '...' : totalDocs}
-          subtitle="PostgreSQL database live count"
+          subtitle="Verified active case files"
           icon={FileText}
           iconBg="bg-blue-50"
           iconColor="text-blue-600"
         />
         <MetricCard
-          title="Blockchain Anchored"
+          title="Permanent Evidence Seals"
           value={documentsStatus.loading ? '...' : anchoredDocs}
-          subtitle="Immutable EVM proofs recorded"
+          subtitle="Court-admissible verified records"
           icon={Blocks}
           iconBg="bg-indigo-50"
           iconColor="text-indigo-600"
         />
         <MetricCard
-          title="Active Secure Shares"
+          title="Active Shared Files"
           value={activeSharesCount}
-          subtitle="Active time-bounded shares"
+          subtitle="Authorized officer shares"
           icon={Share2}
           iconBg="bg-purple-50"
           iconColor="text-purple-600"
         />
         <MetricCard
-          title="Cryptographic Verifications"
+          title="Authenticity Verifications"
           value={documentsStatus.loading ? '...' : verifiedCount}
-          subtitle="Zero-tamper confirmed"
+          subtitle="Tamper-proof confirmed"
           icon={ShieldCheck}
           iconBg="bg-emerald-50"
           iconColor="text-emerald-600"
@@ -153,7 +153,7 @@ export default function DashboardPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h2 className="text-base font-bold text-slate-900">Recent Evidence Documents</h2>
-              <p className="text-xs text-slate-500">Live documents ingested and verified across cases</p>
+              <p className="text-xs text-slate-500">Official case files and evidence records verified in system</p>
             </div>
 
             {/* Filter Tabs */}
@@ -176,7 +176,7 @@ export default function DashboardPage() {
 
           {/* Documents Table Component */}
           {documentsStatus.loading ? (
-            <p className="p-8 text-center text-xs text-slate-500">Loading documents from PostgreSQL...</p>
+            <p className="p-8 text-center text-xs text-slate-500">Loading case records from vault...</p>
           ) : documentsStatus.error ? (
             <div className="p-8 text-center text-xs bg-white rounded-xl border border-slate-200 space-y-2">
               <p className="text-rose-700 font-semibold">{documentsStatus.error}</p>
@@ -186,9 +186,9 @@ export default function DashboardPage() {
             </div>
           ) : documents.length === 0 ? (
             <div className="p-8 text-center text-xs bg-white rounded-xl border border-slate-200 space-y-2">
-              <p className="text-slate-500">No documents found in database.</p>
+              <p className="text-slate-500">No records found in evidence vault.</p>
               <Link href="/upload" className="inline-block px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700">
-                Ingest First Document
+                Add First Case Record
               </Link>
             </div>
           ) : (
@@ -200,7 +200,7 @@ export default function DashboardPage() {
               href="/documents"
               className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
             >
-              <span>View all loaded documents</span>
+              <span>View all case files</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -254,33 +254,33 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* System Security Diagnostics Card */}
+          {/* Vault Security & Legal Compliance Card */}
           <div className="bg-gradient-to-br from-slate-900 to-[#0B192C] text-slate-300 rounded-xl p-5 shadow-xs border border-slate-800 space-y-3">
             <div className="flex items-center gap-2 text-white">
-              <Server className="w-4 h-4 text-blue-400" />
-              <h3 className="text-sm font-bold">Node Diagnostics</h3>
+              <Shield className="w-4 h-4 text-blue-400" />
+              <h3 className="text-sm font-bold">Vault Security & Compliance Status</h3>
             </div>
 
             <div className="space-y-2 text-xs divide-y divide-slate-800 pt-1">
               <div className="flex items-center justify-between pt-2">
-                <span className="text-slate-400">Security Standard</span>
-                <span className="font-semibold text-white">FIPS 180-4 / Section 65B</span>
+                <span className="text-slate-400">Legal Admissibility</span>
+                <span className="font-semibold text-white">Section 65B Indian Evidence Act</span>
               </div>
               <div className="flex items-center justify-between pt-2">
-                <span className="text-slate-400">Hash Algorithm</span>
-                <span className="font-mono text-emerald-400">SHA-256 (Cloudinary)</span>
+                <span className="text-slate-400">Integrity Verification</span>
+                <span className="font-semibold text-emerald-400">Tamper-Proof Digital Seal</span>
               </div>
               <div className="flex items-center justify-between pt-2">
-                <span className="text-slate-400">AI Classification Model</span>
-                <span className="font-semibold text-indigo-300">Groq Qwen 2.5 / PyMuPDF</span>
+                <span className="text-slate-400">Document Intelligence</span>
+                <span className="font-semibold text-indigo-300">Automated Case Analysis Active</span>
               </div>
               <div className="flex items-center justify-between pt-2">
-                <span className="text-slate-400">EVM Proof Network</span>
-                <span className="font-semibold text-blue-400">Solidity Registry (EVM)</span>
+                <span className="text-slate-400">Permanent Ledger</span>
+                <span className="font-semibold text-blue-400">Official Evidence Registry</span>
               </div>
               <div className="flex items-center justify-between pt-2">
-                <span className="text-slate-400">Database Engine</span>
-                <span className="font-semibold text-emerald-400">PostgreSQL (Supabase)</span>
+                <span className="text-slate-400">Storage Protection</span>
+                <span className="font-semibold text-emerald-400">Encrypted Government Vault</span>
               </div>
             </div>
 
@@ -289,7 +289,7 @@ export default function DashboardPage() {
                 href="/security"
                 className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors border border-slate-700"
               >
-                <span>Security Settings & 2FA</span>
+                <span>Security & Access Settings</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
               </Link>
             </div>

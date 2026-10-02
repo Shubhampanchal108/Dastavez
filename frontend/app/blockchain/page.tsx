@@ -49,12 +49,12 @@ function BlockchainContent() {
       const response = await DmsApi.getBlockchainVerify(id);
       if (response.data) {
         setVerifyResult(response.data);
-        setStatusMessage(`Blockchain query completed: Status ${response.data.integrity_status}`);
+        setStatusMessage(`Evidence ledger verification completed: Status ${response.data.integrity_status}`);
       } else {
-        setErrorMessage(response.error || 'Blockchain verification query failed.');
+        setErrorMessage(response.error || 'Evidence ledger verification query failed.');
       }
     } catch (e: any) {
-      setErrorMessage(e?.message || 'Failed to reach blockchain RPC node.');
+      setErrorMessage(e?.message || 'Unable to reach evidence ledger service.');
     } finally {
       setIsVerifying(false);
     }
@@ -68,13 +68,13 @@ function BlockchainContent() {
     try {
       const response = await DmsApi.createBlockchainProof(activeDoc.id);
       if (response.data) {
-        setStatusMessage(`Smart contract proof successfully created! Network: ${response.data.network}`);
+        setStatusMessage('Official legal evidence record successfully registered in the permanent ledger!');
         await handleVerifyOnChain(activeDoc.id);
       } else {
-        setErrorMessage(response.error || 'Failed to create blockchain proof.');
+        setErrorMessage(response.error || 'Failed to create registry proof.');
       }
     } catch (e: any) {
-      setErrorMessage(e?.message || 'Error executing smart contract transaction.');
+      setErrorMessage(e?.message || 'Error registering official evidence record.');
     } finally {
       setIsCreatingProof(false);
     }
@@ -94,7 +94,7 @@ function BlockchainContent() {
   };
 
   if (!activeDoc) {
-    return <div className="p-8 text-center text-slate-500 text-xs">No documents available for blockchain audit.</div>;
+    return <div className="p-8 text-center text-slate-500 text-xs">No documents available for ledger audit.</div>;
   }
 
   const txHash = verifyResult?.transaction_hash || activeDoc.blockchain_tx;
@@ -106,10 +106,10 @@ function BlockchainContent() {
       <div>
         <div className="flex items-center gap-2">
           <Blocks className="w-5 h-5 text-indigo-600" />
-          <h1 className="text-xl font-bold text-slate-900">Blockchain Evidence Ledger & EVM Proofs</h1>
+          <h1 className="text-xl font-bold text-slate-900">Official Digital Evidence Ledger</h1>
         </div>
         <p className="text-xs text-slate-500 mt-1">
-          Cryptographically notarized smart contract proofs anchored on Ethereum virtual machine roll-up.
+          Tamper-proof permanent record registry ensuring legal non-repudiation in judicial proceedings.
         </p>
       </div>
 
@@ -157,7 +157,7 @@ function BlockchainContent() {
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 text-xs font-semibold transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>{isCreatingProof ? 'Anchoring...' : 'Anchor Proof'}</span>
+            <span>{isCreatingProof ? 'Registering...' : 'Register Permanent Seal'}</span>
           </button>
           <button
             onClick={() => void handleVerifyOnChain(activeDoc.id)}
@@ -165,7 +165,7 @@ function BlockchainContent() {
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs transition-colors"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isVerifying ? 'animate-spin' : ''}`} />
-            <span>{isVerifying ? 'Querying EVM Node...' : 'Verify Proof'}</span>
+            <span>{isVerifying ? 'Verifying Record...' : 'Verify Ledger Proof'}</span>
           </button>
         </div>
       </div>
@@ -179,24 +179,24 @@ function BlockchainContent() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold">Ethereum Proof Certificate</h3>
+                <h3 className="text-lg font-bold">Official Evidence Registry Certificate</h3>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                   isVerified
                     ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                     : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                 }`}>
-                  {verifyResult?.integrity_status || 'NOT_ANCHORED'}
+                  {verifyResult?.integrity_status === 'VERIFIED' ? 'AUTHENTICITY CERTIFIED' : 'PENDING REGISTRATION'}
                 </span>
               </div>
               <p className="text-xs text-indigo-200 mt-0.5">
-                Solidity Contract Registry: 0x714c8e62Dc3c6af8946f6B89Fe43Fb67327aC077
+                Permanent Evidence Registry Reference: REG-SEC-65B
               </p>
             </div>
           </div>
 
           <div className="text-right font-mono">
-            <span className="text-xs text-indigo-300 block">EVM NETWORK</span>
-            <span className="text-sm font-bold text-white uppercase">{verifyResult?.network || 'Ganache / Ethereum'}</span>
+            <span className="text-xs text-indigo-300 block">REGISTRY NETWORK</span>
+            <span className="text-sm font-bold text-white uppercase">Secure Evidence Ledger</span>
           </div>
         </div>
 
@@ -204,7 +204,7 @@ function BlockchainContent() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
           <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-1">
             <span className="text-[10px] text-indigo-300 block uppercase tracking-wider font-sans font-bold">
-              Document Fingerprint (SHA-256)
+              Document Security Seal ID
             </span>
             <p className="text-slate-200 break-all leading-normal text-[11px]">{activeDoc.sha256_hash}</p>
           </div>
@@ -212,7 +212,7 @@ function BlockchainContent() {
           <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-1">
             <div className="flex justify-between items-center">
               <span className="text-[10px] text-indigo-300 block uppercase tracking-wider font-sans font-bold">
-                Transaction Hash
+                Registry Reference Code
               </span>
               {txHash && (
                 <button
@@ -225,13 +225,13 @@ function BlockchainContent() {
               )}
             </div>
             <p className="text-blue-300 break-all leading-normal text-[11px]">
-              {txHash || 'Pending on-chain notarization'}
+              {txHash || 'Pending official registry confirmation'}
             </p>
           </div>
 
           <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-1">
             <span className="text-[10px] text-indigo-300 block uppercase tracking-wider font-sans font-bold">
-              Smart Contract Proof Hash
+              Legal Proof Reference ID
             </span>
             <p className="text-slate-200 break-all leading-normal text-[11px]">
               {verifyResult?.proof_hash || '0x' + activeDoc.sha256_hash.slice(0, 32)}
@@ -240,17 +240,17 @@ function BlockchainContent() {
 
           <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-1">
             <span className="text-[10px] text-indigo-300 block uppercase tracking-wider font-sans font-bold">
-              Chain Consensus & Verification
+              Legal Record Admissibility & Status
             </span>
             <p className="text-slate-200 text-xs font-bold">
-              EVM Notarization • Status: {verifyResult?.integrity_status || 'NOT_ANCHORED'}
+              Official Seal Status: {verifyResult?.integrity_status || 'NOT_ANCHORED'}
             </p>
           </div>
         </div>
 
         <div className="pt-2 flex items-center justify-between text-[11px] text-indigo-300/80 font-sans border-t border-indigo-900/60">
-          <span>Smart contract notary ensures zero repudiation in judicial proceedings.</span>
-          <span className="font-mono">Storage: PostgreSQL & EVM</span>
+          <span>Official digital registry guarantees tamper-evident validity for court and judicial proceedings.</span>
+          <span className="font-mono">Storage: Official Evidence Vault & Permanent Ledger</span>
         </div>
       </div>
     </div>
@@ -259,7 +259,7 @@ function BlockchainContent() {
 
 export default function BlockchainPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-500">Loading blockchain evidence...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-500">Loading official evidence ledger...</div>}>
       <BlockchainContent />
     </Suspense>
   );

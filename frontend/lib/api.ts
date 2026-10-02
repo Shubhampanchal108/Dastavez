@@ -132,7 +132,7 @@ export async function apiRequest<T = any>(
       }
       const errorMsg =
         (data && (data.detail || data.message)) ||
-        `Request failed with HTTP status ${response.status}`;
+        `Request could not be processed (Status Code: ${response.status})`;
       return { data: null, error: errorMsg, status: response.status };
     }
 
@@ -141,8 +141,8 @@ export async function apiRequest<T = any>(
     clearTimeout(timeoutId);
     const msg =
       err.name === 'AbortError'
-        ? 'Connection timed out. Check FastAPI backend.'
-        : err.message || 'Cannot reach FastAPI server';
+        ? 'Connection timed out. Unable to connect to secure server.'
+        : err.message || 'Cannot connect to secure server. Please verify network connection.';
     return { data: null, error: msg, status: 0 };
   }
 }

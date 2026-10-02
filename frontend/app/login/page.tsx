@@ -194,7 +194,7 @@ export default function LoginPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-white">DMS Evidence Vault</h1>
-            <p className="text-xs text-slate-400">Institutional Cryptographic Terminal • PostgreSQL Connected</p>
+            <p className="text-xs text-slate-400">Law Enforcement Portal • Secure Case Evidence Vault</p>
           </div>
         </div>
 
@@ -483,7 +483,7 @@ export default function LoginPage() {
         )}
 
         <div className="mt-8 pt-4 border-t border-slate-800/80 text-center text-[11px] text-slate-500">
-          FastAPI + PostgreSQL Supabase Engine • Full Dynamic RBAC
+          Secure Police Record Management System • Authorized Personnel Only
         </div>
       </div>
     </div>

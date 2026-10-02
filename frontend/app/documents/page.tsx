@@ -47,7 +47,7 @@ export default function DocumentsPage() {
   });
 
   const handleExportCsv = () => {
-    const headers = ['ID', 'Case ID', 'Filename', 'Type', 'Department', 'Sensitivity', 'SHA-256', 'Status'];
+    const headers = ['ID', 'Case ID', 'Filename', 'Type', 'Department', 'Clearance Level', 'Security Seal ID', 'Status'];
     const rows = filtered.map((d) => [
       d.id,
       d.case_id,
@@ -75,10 +75,10 @@ export default function DocumentsPage() {
         <div>
           <div className="flex items-center gap-2">
             <Files className="w-5 h-5 text-blue-600" />
-            <h1 className="text-xl font-bold text-slate-900">Evidence Document Repository</h1>
+            <h1 className="text-xl font-bold text-slate-900">Case Files & Evidence Repository</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Browse, inspect, and verify institutional case files with cryptographic records.
+            Browse, inspect, and verify official police case files and evidence records.
           </p>
         </div>
 
@@ -95,7 +95,7 @@ export default function DocumentsPage() {
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Ingest Document</span>
+            <span>Add Case Record</span>
           </Link>
         </div>
       </div>

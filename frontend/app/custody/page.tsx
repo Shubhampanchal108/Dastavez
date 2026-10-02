@@ -62,7 +62,7 @@ function CustodyContent() {
       ...(notes.trim() ? { notes: notes.trim() } : {}),
     });
     if (!response.data) {
-      setErrorMsg(response.error || `Custody transfer failed (HTTP ${response.status}).`);
+      setErrorMsg(response.error || 'Custody transfer failed. Please verify officer clearance and try again.');
       return;
     }
     setCustodyEvents((current) => [response.data, ...current]);
@@ -84,7 +84,7 @@ function CustodyContent() {
         <div>
           <div className="flex items-center gap-2">
             <GitPullRequest className="w-5 h-5 text-blue-600" />
-            <h1 className="text-xl font-bold text-slate-900">Digital Chain of Custody (ChainLog)</h1>
+            <h1 className="text-xl font-bold text-slate-900">Official Chain of Custody & Evidence Handover</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
             Tamper-evident log documenting every physical and digital handover of case evidence.

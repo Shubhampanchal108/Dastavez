@@ -117,7 +117,7 @@ export default function DocumentViewerPage() {
               <StatusBadge status={doc.status} size="sm" />
             </div>
             <span className="text-[10px] font-mono text-slate-400">
-              {doc.case_id} • SHA-256: {doc.sha256_hash?.slice(0, 12)}...
+              {doc.case_id} • Seal ID: {doc.sha256_hash?.slice(0, 12)}...
             </span>
           </div>
         </div>
@@ -202,7 +202,7 @@ export default function DocumentViewerPage() {
                 {doc.original_filename?.replace(/\.[^/.]+$/, '').replace(/_/g, ' ')}
               </h3>
               <p className="text-[11px] text-slate-600 italic">
-                Registered Ingestion Record • Status: {doc.status} • Classification: {doc.sensitivity || 'INTERNAL'}
+                Official Evidence Record • Status: {doc.status} • Classification: {doc.sensitivity || 'INTERNAL'}
               </p>
               <div className="p-3 bg-slate-50 border border-slate-200 rounded font-mono text-[10px] leading-normal text-slate-700 whitespace-pre-wrap">
                 {rawText}
@@ -212,25 +212,25 @@ export default function DocumentViewerPage() {
             {/* Document Footer Seal */}
             <div className="absolute bottom-10 left-12 right-12 pt-4 border-t border-slate-300 flex justify-between items-end text-[9px] text-slate-500 font-mono">
               <div>
-                <p>CRYPTOGRAPHIC HASH VERIFIED</p>
+                <p>OFFICIAL DIGITAL SEAL VERIFIED</p>
                 <p>{doc.sha256_hash?.slice(0, 32)}...</p>
               </div>
               <div className="text-right">
-                <p>STORAGE: {doc.storage_provider || 'CLOUDINARY'}</p>
+                <p>VAULT: OFFICIAL REPOSITORY</p>
                 <p>OFFICER ID: {doc.uploaded_by || doc.uploader || 'N/A'}</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right: OCR & Extracted Entity Inspector */}
+        {/* Right: Text & Content Inspector */}
         <div className="w-[45%] bg-slate-900 text-slate-200 flex flex-col shrink-0">
-          {/* OCR Panel Header */}
+          {/* Panel Header */}
           <div className="p-4 border-b border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-blue-400" />
               <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                OCR Text & Metadata Inspector
+                Document Text & Content Inspector
               </h3>
             </div>
             <button
@@ -251,7 +251,7 @@ export default function DocumentViewerPage() {
             </button>
           </div>
 
-          {/* Search within OCR text */}
+          {/* Search within text */}
           <div className="p-3 border-b border-slate-800/80 bg-slate-950/40">
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -259,7 +259,7 @@ export default function DocumentViewerPage() {
                 type="text"
                 value={ocrSearch}
                 onChange={(e) => setOcrSearch(e.target.value)}
-                placeholder="Search within extracted OCR text..."
+                placeholder="Search within document text..."
                 className="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-200 placeholder:text-slate-500 focus:outline-hidden focus:border-blue-500"
               />
             </div>

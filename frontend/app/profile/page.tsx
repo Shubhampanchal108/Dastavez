@@ -50,7 +50,7 @@ export default function ProfilePage() {
           <h1 className="text-xl font-bold text-slate-900">Officer Identity & Clearance Profile</h1>
         </div>
         <p className="text-xs text-slate-500 mt-1">
-          Cryptographically notarized credentials, RBAC clearance, and active authenticated sessions verified by PostgreSQL.
+          Official officer credentials, duty clearance level, and verified active session records.
         </p>
       </div>
 
@@ -67,7 +67,7 @@ export default function ProfilePage() {
               {role}
             </span>
           </div>
-          <p className="text-xs text-slate-300 font-mono">User UUID: {userId}</p>
+          <p className="text-xs text-slate-300 font-mono">Officer ID: {userId}</p>
 
           <div className="pt-3 flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs">
             <span className="px-2.5 py-1 rounded-md bg-white/10 border border-white/20 text-slate-200">
@@ -75,7 +75,7 @@ export default function ProfilePage() {
             </span>
             <span className="px-2.5 py-1 rounded-md bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 font-semibold flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Session Authenticated (JWT)</span>
+              <span>Session Authenticated & Active</span>
             </span>
           </div>
         </div>
@@ -101,11 +101,11 @@ export default function ProfilePage() {
             <span className="text-blue-700 font-bold">{role}</span>
           </div>
           <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-            <span className="text-[10px] text-slate-400 uppercase block">Password Hasher</span>
-            <span className="text-slate-800 font-bold">Argon2id (Backend)</span>
+            <span className="text-[10px] text-slate-400 uppercase block">Security Protection</span>
+            <span className="text-slate-800 font-bold">Encrypted Officer Vault</span>
           </div>
           <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-            <span className="text-[10px] text-slate-400 uppercase block">MFA Challenge</span>
+            <span className="text-[10px] text-slate-400 uppercase block">Two-Factor Verification</span>
             <span className="text-emerald-700 font-bold">Enforced (OTP / Authenticator)</span>
           </div>
         </div>

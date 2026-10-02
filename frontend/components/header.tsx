@@ -92,7 +92,7 @@ export function Header() {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search documents, case numbers, SHA-256 hashes..."
+          placeholder="Search records, case numbers, file names..."
           className="w-full pl-9 pr-12 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
         />
         <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-mono bg-slate-200/60 px-1.5 py-0.5 rounded border border-slate-300">
@@ -102,36 +102,27 @@ export function Header() {
 
       {/* Right Controls */}
       <div className="flex items-center gap-3.5">
-        {/* System Diagnostics Badge */}
-        <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 text-xs">
-          <div className="flex items-center gap-1.5">
-            <span
-              className={`w-2 h-2 rounded-full ${
-                backendLive ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
-              }`}
-            />
-            <span className="font-semibold text-slate-700">FastAPI</span>
-          </div>
-          <span className="text-slate-300">|</span>
-          <div className="flex items-center gap-1.5">
-            <span
-              className={`w-2 h-2 rounded-full ${
-                dbStatus === 'connected' ? 'bg-emerald-500' : 'bg-rose-500'
-              }`}
-            />
-            <span className="font-semibold text-slate-700">
-              {dbStatus === 'connected' ? 'PostgreSQL' : 'Offline DB'}
-            </span>
-          </div>
+        {/* System Operational Status Badge */}
+        <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-xs">
+          <span
+            className={`w-2 h-2 rounded-full ${
+              backendLive && dbStatus === 'connected'
+                ? 'bg-emerald-500 animate-pulse'
+                : 'bg-amber-500'
+            }`}
+          />
+          <span className="font-semibold text-slate-700">
+            {backendLive && dbStatus === 'connected' ? 'Secure Vault Online' : 'System Degraded'}
+          </span>
         </div>
 
-        {/* Action Button: Ingest */}
+        {/* Action Button: Add Document */}
         <Link
           href="/upload"
           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors"
         >
           <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-          <span>Ingest Document</span>
+          <span>Add Case Record</span>
         </Link>
 
         {/* Notifications Popover */}
@@ -184,7 +175,7 @@ export function Header() {
               <div className="px-3 py-1.5 border-b border-slate-100 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 Switch Active Officer Role
               </div>
-              <p className="px-3 py-2 text-xs text-slate-500">Authenticated identity is managed by the backend.</p>
+              <p className="px-3 py-2 text-xs text-slate-500">Official identity assigned to your active session.</p>
               <div className="border-t border-slate-100 pt-1 mt-1">
                 <Link
                   href="/login"
@@ -195,7 +186,7 @@ export function Header() {
                   className="w-full text-left px-3 py-2 flex items-center gap-2 text-rose-600 hover:bg-rose-50 text-xs font-medium"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  <span>Logout / 2FA Re-auth</span>
+                  <span>Sign Out / Lock Session</span>
                 </Link>
               </div>
             </div>

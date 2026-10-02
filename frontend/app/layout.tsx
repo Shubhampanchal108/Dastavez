@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DMS | Institutional Evidence & Document Management System",
-  description: "Enterprise Document Management System with SHA-256 integrity, AI classification, blockchain proofs, and secure custody chains.",
+  title: "DMS | Law Enforcement Evidence & Case Record Vault",
+  description: "Secure Police Document Management System & Evidence Vault with tamper-proof digital seals, automated case classification, official registry verification, and evidence chain of custody.",
 };
 
 export default function RootLayout({

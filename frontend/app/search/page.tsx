@@ -105,10 +105,10 @@ function SearchContent() {
       <div>
         <div className="flex items-center gap-2">
           <Search className="w-5 h-5 text-blue-600" />
-          <h1 className="text-xl font-bold text-slate-900">Advanced Multi-Criteria Search</h1>
+          <h1 className="text-xl font-bold text-slate-900">Case & Evidence Document Search</h1>
         </div>
         <p className="text-xs text-slate-500 mt-1">
-          Perform full-text search across extracted OCR documents, cryptographic hashes, and case metadata.
+          Search across all official case files, document text, officer names, and case numbers.
         </p>
       </div>
 
@@ -120,7 +120,7 @@ function SearchContent() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search keywords, deponent names, forensic ledger findings, or SHA-256..."
+            placeholder="Search case number, officer/witness names, keywords, or document details..."
             className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           />
         </div>
@@ -180,7 +180,7 @@ function SearchContent() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-500">Executing search query...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-500">Searching case records...</div>}>
       <SearchContent />
     </Suspense>
   );

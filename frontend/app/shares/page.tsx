@@ -87,7 +87,7 @@ function SharesContent() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2"><Share2 className="w-5 h-5 text-purple-600" /><h1 className="text-xl font-bold text-slate-900">Secure Document Shares</h1></div>
-          <p className="text-xs text-slate-500 mt-1">Manage backend-authorized, time-limited document access.</p>
+          <p className="text-xs text-slate-500 mt-1">Manage officially authorized, time-limited case document access.</p>
         </div>
         <button onClick={() => setModalOpen(true)} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"><Plus className="w-4 h-4" />Create Secure Share</button>
       </div>
