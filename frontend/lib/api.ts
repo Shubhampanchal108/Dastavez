@@ -190,14 +190,17 @@ export const DmsApi = {
     return res;
   },
 
-  async getAuthenticatorChallengeStatus(challengeId: string) {
-    return apiRequest(`/api/auth/authenticator-challenge/${challengeId}`);
+  async getAuthenticatorChallengeStatus(challengeId: string, pollToken: string) {
+    return apiRequest(`/api/auth/authenticator-challenge/${challengeId}`, {
+      headers: { Authorization: `Bearer ${pollToken}` },
+    });
   },
 
-  async completeAuthenticator(challengeId: string) {
+  async completeAuthenticator(challengeId: string, pollToken: string) {
     const res = await apiRequest('/api/auth/login/complete', {
       method: 'POST',
       body: JSON.stringify({ challenge_id: challengeId }),
+      headers: { Authorization: `Bearer ${pollToken}` },
     });
     if (res.data && res.data.access_token) {
       ApiConfig.setToken(res.data.access_token);
