@@ -79,7 +79,8 @@
           Quick Access & Downloads
         </div>
         <ul class="sidebar-nav-list">
-          <li><a href="#access-hub" class="sidebar-link active"><span>Portal & APK Download</span> <span class="nav-badge new">v2.4.0</span></a></li>
+          <li><a href="#access-hub" class="sidebar-link active"><span>Portal & Downloads</span></a></li>
+          <li><a href="#download" class="sidebar-link"><span>Mobile Authenticator</span> <span class="nav-badge new">v1.0.0</span></a></li>
           <li><a href="#police-mission" class="sidebar-link"><span>Police Station Mission</span></a></li>
           <li><a href="#current-problems" class="sidebar-link"><span>Current System Problems</span></a></li>
           <li><a href="#gov-benefits" class="sidebar-link"><span>Gov & Judicial Benefits</span></a></li>
@@ -278,41 +279,51 @@
           </div>
 
           <!-- Mobile Authenticator APK Card -->
-          <div class="access-hub-card apk-card">
+          <div class="access-hub-card apk-card" id="download">
             <div class="access-badge-row">
               <span class="hub-type-badge badge-apk">Android Release APK</span>
-              <span style="font-size: 0.72rem; color: var(--accent-emerald); font-weight: 700;">v2.4.0 Stable</span>
+              <span style="font-size: 0.72rem; color: var(--accent-emerald); font-weight: 700;">Version 1.0.0</span>
             </div>
             <h3 class="hub-title">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-              Police Authenticator APK
+              DMS Mobile Authenticator
             </h3>
             <p class="hub-desc">
-              Dedicated Flutter security application for Investigating Officers (IO) and Station House Officers (SHO). Authorizes web logins via biometric sensors without transmitting passwords or JWTs.
+              Securely approve DMS web login requests using Android biometric authentication and Android Keystore.
             </p>
+
+            <p class="platform-message" id="authenticator-platform-message" aria-live="polite">The authenticator is currently available for Android.</p>
+            <figure class="authenticator-qr">
+              <img src="assets/mobile-authenticator-qr.svg" alt="QR code linking to the DMS Mobile Authenticator download page at https://frontend-blond-beta-23.vercel.app/#download" width="220" height="220">
+              <figcaption class="desktop-qr-copy">Scan with your Android phone to download the DMS Mobile Authenticator.</figcaption>
+            </figure>
 
             <div class="hub-meta-box">
               <div class="hub-meta-row">
-                <span class="meta-label">Package Name:</span>
+                <span class="meta-label">Version:</span>
+                <span class="meta-val">1.0.0</span>
+              </div>
+              <div class="hub-meta-row">
+                <span class="meta-label">Android Application ID:</span>
                 <span class="meta-val">com.dms.authenticator</span>
               </div>
               <div class="hub-meta-row">
-                <span class="meta-label">File Size / OS:</span>
-                <span class="meta-val">28.4 MB • Android 8.0+</span>
+                <span class="meta-label">APK size:</span>
+                <span class="meta-val">Approximately 47 MB</span>
               </div>
               <div class="hub-meta-row">
-                <span class="meta-label">Cryptographic Engine:</span>
-                <span class="meta-val">Hardware Keystore / Biometric</span>
+                <span class="meta-label">SHA-256:</span>
+                <span class="meta-val authenticator-checksum">8068B653DBD58C3B3A73587EEDC96E56F9FD430BD0E8CD6AB6E8D4817C5BE3CC</span>
               </div>
             </div>
 
             <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-              <a href="../mobile/build/app/outputs/flutter-apk/app-release.apk" download="dms-police-authenticator-v2.4.0.apk" class="btn btn-apk-download" style="flex: 1;" onclick="if(!this.hasAttribute('href_checked')){ event.preventDefault(); alert('DMS Authenticator APK Build Ready! To build an updated release binary on your machine, run:\ncd mobile\nflutter build apk --release'); }">
+              <a href="https://github.com/blanko1512/-DMS/releases/latest/download/app-release.apk" class="btn btn-apk-download" style="flex: 1;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                <span>Download APK (v2.4.0)</span>
+                <span>Download Android App</span>
               </a>
-              <a href="#auth-flow" class="btn btn-secondary">
-                <span>Pairing Guide</span>
+              <a href="https://github.com/blanko1512/-DMS/releases/tag/v1.0.0" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">
+                <span>View GitHub Release</span>
               </a>
             </div>
           </div>
