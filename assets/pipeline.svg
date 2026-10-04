@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 320" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0f1d" />
+      <stop offset="50%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#030712" />
+    </linearGradient>
+
+    <!-- Card Gradients -->
+    <linearGradient id="cardGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#312e81" stop-opacity="0.4" />
+    </linearGradient>
+    <linearGradient id="cardGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#083344" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#164e63" stop-opacity="0.4" />
+    </linearGradient>
+    <linearGradient id="cardGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#047857" stop-opacity="0.4" />
+    </linearGradient>
+    <linearGradient id="cardGrad4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4c1d95" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#6d28d9" stop-opacity="0.4" />
+    </linearGradient>
+
+    <!-- Glow & Borders -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <linearGradient id="cyanGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#3b82f6" />
+    </linearGradient>
+    <linearGradient id="purpleGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#ec4899" />
+    </linearGradient>
+  </defs>
+
+  <style>
+    .title { font-family: system-ui, -apple-system, sans-serif; font-size: 15px; font-weight: 700; fill: #ffffff; }
+    .subtitle { font-family: system-ui, -apple-system, sans-serif; font-size: 12px; fill: #94a3b8; }
+    .step-num { font-family: system-ui, -apple-system, sans-serif; font-size: 11px; font-weight: 800; fill: #38bdf8; letter-spacing: 1px; }
+    .badge { font-family: system-ui, -apple-system, sans-serif; font-size: 10px; font-weight: 600; fill: #a5f3fc; }
+  </style>
+
+  <!-- Background Canvas -->
+  <rect width="1000" height="320" rx="16" fill="url(#bgGrad)" stroke="#1e293b" stroke-width="1.5" />
+
+  <!-- Grid Pattern Overlay -->
+  <g opacity="0.05" stroke="#ffffff" stroke-width="1">
+    <line x1="0" y1="80" x2="1000" y2="80" />
+    <line x1="0" y1="160" x2="1000" y2="160" />
+    <line x1="0" y1="240" x2="1000" y2="240" />
+    <line x1="250" y1="0" x2="250" y2="320" />
+    <line x1="500" y1="0" x2="500" y2="320" />
+    <line x1="750" y1="0" x2="750" y2="320" />
+  </g>
+
+  <!-- Title Top Banner -->
+  <text x="500" y="42" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="800" fill="#f8fafc" letter-spacing="0.5">
+    ⚡ DASTAVEZ END-TO-END DOCUMENT LIFECYCLE PIPELINE ⚡
+  </text>
+  <text x="500" y="62" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#64748b">
+    From Zero-Trust Intake to AI Extraction, Cryptographic Anchoring &amp; Custody
+  </text>
+
+  <!-- Connecting Line with Pulse -->
+  <line x1="145" y1="185" x2="855" y2="185" stroke="#334155" stroke-width="3" stroke-dasharray="6 6" />
+  <line x1="145" y1="185" x2="855" y2="185" stroke="url(#cyanGlow)" stroke-width="2" opacity="0.7" />
+
+  <!-- STEP 1: Secure Intake -->
+  <g transform="translate(35, 95)">
+    <rect width="210" height="180" rx="12" fill="url(#cardGrad1)" stroke="#6366f1" stroke-width="1.5" />
+    <rect x="15" y="15" width="36" height="36" rx="8" fill="#4338ca" />
+    <!-- Lock / Ingestion Icon -->
+    <path d="M28 29v-3a5 5 0 0 1 10 0v3m-7 0h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H21a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z" fill="none" stroke="#e0e7ff" stroke-width="2" stroke-linecap="round" />
+    <text x="60" y="30" class="step-num">PHASE 01</text>
+    <text x="60" y="46" class="title">Secure Ingestion</text>
+    <text x="15" y="80" class="subtitle">• Next.js 16 Web Portal</text>
+    <text x="15" y="100" class="subtitle">• Mobile Biometric 2FA</text>
+    <text x="15" y="120" class="subtitle">• Case &amp; Tag Metadata</text>
+    <text x="15" y="140" class="subtitle">• RBAC Permission Guard</text>
+    <rect x="15" y="152" width="105" height="18" rx="9" fill="#312e81" />
+    <text x="67" y="165" text-anchor="middle" class="badge">Zero-Trust Intake</text>
+  </g>
+
+  <!-- Arrow 1 -> 2 -->
+  <circle cx="260" cy="185" r="14" fill="#0f172a" stroke="#06b6d4" stroke-width="2" />
+  <path d="M257 180 l5 5 -5 5" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" />
+
+  <!-- STEP 2: Intelligent Processing -->
+  <g transform="translate(285, 95)">
+    <rect width="210" height="180" rx="12" fill="url(#cardGrad2)" stroke="#06b6d4" stroke-width="1.5" />
+    <rect x="15" y="15" width="36" height="36" rx="8" fill="#0891b2" />
+    <!-- AI Brain / Scan Icon -->
+    <path d="M25 33a6 6 0 0 1 6-6h14a6 6 0 0 1 6 6v4a6 6 0 0 1-6 6H31a6 6 0 0 1-6-6z" fill="none" stroke="#cffafe" stroke-width="2" />
+    <circle cx="33" cy="35" r="2" fill="#cffafe" />
+    <circle cx="43" cy="35" r="2" fill="#cffafe" />
+    <text x="60" y="30" class="step-num" fill="#38bdf8">PHASE 02</text>
+    <text x="60" y="46" class="title">AI &amp; OCR Engine</text>
+    <text x="15" y="80" class="subtitle">• PyMuPDF &amp; Tesseract OCR</text>
+    <text x="15" y="100" class="subtitle">• Groq Llama-3 AI Parser</text>
+    <text x="15" y="120" class="subtitle">• Auto-Classification</text>
+    <text x="15" y="140" class="subtitle">• Schema Validation</text>
+    <rect x="15" y="152" width="105" height="18" rx="9" fill="#164e63" />
+    <text x="67" y="165" text-anchor="middle" class="badge">99.4% Extraction</text>
+  </g>
+
+  <!-- Arrow 2 -> 3 -->
+  <circle cx="510" cy="185" r="14" fill="#0f172a" stroke="#10b981" stroke-width="2" />
+  <path d="M507 180 l5 5 -5 5" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" />
+
+  <!-- STEP 3: Cryptographic Integrity -->
+  <g transform="translate(535, 95)">
+    <rect width="210" height="180" rx="12" fill="url(#cardGrad3)" stroke="#10b981" stroke-width="1.5" />
+    <rect x="15" y="15" width="36" height="36" rx="8" fill="#059669" />
+    <!-- Blockchain / Hash Icon -->
+    <path d="M33 22l10 6v12l-10 6 -10-6V28z" fill="none" stroke="#d1fae5" stroke-width="2" />
+    <circle cx="33" cy="34" r="3" fill="#d1fae5" />
+    <text x="60" y="30" class="step-num" fill="#34d399">PHASE 03</text>
+    <text x="60" y="46" class="title">Blockchain Anchoring</text>
+    <text x="15" y="80" class="subtitle">• SHA-256 Digest Proof</text>
+    <text x="15" y="100" class="subtitle">• Solidity EVM Registry</text>
+    <text x="15" y="120" class="subtitle">• Anti-Tamper Verification</text>
+    <text x="15" y="140" class="subtitle">• Duplicate Deduplication</text>
+    <rect x="15" y="152" width="115" height="18" rx="9" fill="#065f46" />
+    <text x="72" y="165" text-anchor="middle" class="badge" fill="#6ee7b7">Tamper Evident</text>
+  </g>
+
+  <!-- Arrow 3 -> 4 -->
+  <circle cx="760" cy="185" r="14" fill="#0f172a" stroke="#a855f7" stroke-width="2" />
+  <path d="M757 180 l5 5 -5 5" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" />
+
+  <!-- STEP 4: Custody & Governance -->
+  <g transform="translate(785, 95)">
+    <rect width="180" height="180" rx="12" fill="url(#cardGrad4)" stroke="#a855f7" stroke-width="1.5" />
+    <rect x="15" y="15" width="36" height="36" rx="8" fill="#7c3aed" />
+    <!-- Audit / Shield Icon -->
+    <path d="M33 22l9 4v6c0 6-4 11-9 13 -5-2-9-7-9-13v-6z" fill="none" stroke="#f3e8ff" stroke-width="2" />
+    <text x="60" y="30" class="step-num" fill="#c084fc">PHASE 04</text>
+    <text x="60" y="46" class="title">Chain of Custody</text>
+    <text x="15" y="80" class="subtitle">• Immutable Event Logs</text>
+    <text x="15" y="100" class="subtitle">• Granular Share Revoke</text>
+    <text x="15" y="120" class="subtitle">• Version Audit Trail</text>
+    <text x="15" y="140" class="subtitle">• Supabase Verified Restores</text>
+    <rect x="15" y="152" width="105" height="18" rx="9" fill="#581c87" />
+    <text x="67" y="165" text-anchor="middle" class="badge" fill="#d8b4fe">100% Traceable</text>
+  </g>
+</svg>

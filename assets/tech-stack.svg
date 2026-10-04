@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 160" width="100%" height="100%">
+  <defs>
+    <linearGradient id="tsBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0f19"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="pillGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="900" height="160" rx="12" fill="url(#tsBg)" stroke="#334155" stroke-width="1.5" />
+
+  <!-- Title -->
+  <text x="450" y="32" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#94a3b8" letter-spacing="1.5">
+    CORE ARCHITECTURE &amp; TECHNOLOGY ECOSYSTEM
+  </text>
+
+  <!-- Group 1: Frontend -->
+  <g transform="translate(30, 52)">
+    <rect width="150" height="90" rx="8" fill="url(#pillGrad)" stroke="#38bdf8" stroke-width="1.2"/>
+    <text x="75" y="24" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#38bdf8">🌐 Frontend</text>
+    <text x="75" y="44" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#e2e8f0">Next.js 16 (App)</text>
+    <text x="75" y="60" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#e2e8f0">React 19 &amp; TS</text>
+    <text x="75" y="76" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">Tailwind CSS 4</text>
+  </g>
+
+  <!-- Group 2: Backend -->
+  <g transform="translate(200, 52)">
+    <rect width="150" height="90" rx="8" fill="url(#pillGrad)" stroke="#10b981" stroke-width="1.2"/>
+    <text x="75" y="24" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#10b981">⚡ Backend</text>
+    <text x="75" y="44" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#e2e8f0">FastAPI &amp; Uvicorn</text>
+    <text x="75" y="60" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#e2e8f0">Python 3.11+</text>
+    <text x="75" y="76" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">SQLAlchemy &amp; Alembic</text>
+  </g>
+
+  <!-- Group 3: Intelligence -->
+  <g transform="translate(370, 52)">
+    <rect width="160" height="90" rx="8" fill="url(#pillGrad)" stroke="#f59e0b" stroke-width="1.2"/>
+    <text x="80" y="24" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#f59e0b">🧠 AI &amp; Extraction</text>
+    <text x="80" y="44" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#e2e8f0">Groq LLM (Llama-3)</text>
+    <text x="80" y="60" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#e2e8f0">Tesseract OCR</text>
+    <text x="80" y="76" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">PyMuPDF Engine</text>
+  </g>
+
+  <!-- Group 4: Blockchain -->
+  <g transform="translate(550, 52)">
+    <rect width="150" height="90" rx="8" fill="url(#pillGrad)" stroke="#8b5cf6" stroke-width="1.2"/>
+    <text x="75" y="24" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#a78bfa">⛓️ Blockchain</text>
+    <text x="75" y="44" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#e2e8f0">EVM Smart Contracts</text>
+    <text x="75" y="60" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#e2e8f0">Web3.py &amp; Solidity</text>
+    <text x="75" y="76" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">SHA-256 Anchoring</text>
+  </g>
+
+  <!-- Group 5: Mobile & Storage -->
+  <g transform="translate(720, 52)">
+    <rect width="150" height="90" rx="8" fill="url(#pillGrad)" stroke="#ec4899" stroke-width="1.2"/>
+    <text x="75" y="24" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#f472b6">📱 Mobile &amp; Cloud</text>
+    <text x="75" y="44" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#e2e8f0">Flutter 2FA App</text>
+    <text x="75" y="60" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#e2e8f0">Cloudinary &amp; Supabase</text>
+    <text x="75" y="76" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">PostgreSQL 14+</text>
+  </g>
+</svg>
