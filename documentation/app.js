@@ -7,6 +7,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   initMobileNav();
+  initAuthenticatorPlatformMessage();
   initScrollSpy();
   initReadingProgress();
   initBackToTop();
@@ -15,6 +16,17 @@ document.addEventListener('DOMContentLoaded', () => {
   initApiAccordions();
   initSearch();
 });
+
+function initAuthenticatorPlatformMessage() {
+  const message = document.getElementById('authenticator-platform-message');
+  const card = document.getElementById('download');
+  if (!message || !card) return;
+
+  if (/android/i.test(navigator.userAgent)) {
+    message.textContent = 'Android detected — Download the app.';
+    card.classList.add('android-detected');
+  }
+}
 
 /* ==========================================================================
    1. Theme Management (Dark / Light)

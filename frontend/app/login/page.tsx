@@ -62,8 +62,12 @@ export default function LoginPage() {
       }
 
       if (res.data.status !== 'OTP_REQUIRED') {
+        if (!res.data.poll_token) {
+          setErrorMsg('Authenticator challenge did not include its polling credential.');
+          return;
+        }
         setStep('authenticator');
-        void waitForAuthenticatorApproval(res.data.challenge_id);
+        void waitForAuthenticatorApproval(res.data.challenge_id, res.data.poll_token);
         setIsLoading(false);
         return;
       }
@@ -93,11 +97,11 @@ export default function LoginPage() {
     await startLoginWithCredentials(officer.email, 'password123');
   };
 
-  const waitForAuthenticatorApproval = async (id: string) => {
+  const waitForAuthenticatorApproval = async (id: string, pollToken: string) => {
     for (let attempt = 0; attempt < 150; attempt += 1) {
-      const res = await DmsApi.getAuthenticatorChallengeStatus(id);
+      const res = await DmsApi.getAuthenticatorChallengeStatus(id, pollToken);
       if (res.data?.status === 'APPROVED') {
-        const completed = await DmsApi.completeAuthenticator(id);
+        const completed = await DmsApi.completeAuthenticator(id, pollToken);
         if (!completed.data?.access_token) {
           setErrorMsg(completed.error || 'Mobile approval could not complete login.');
           return;

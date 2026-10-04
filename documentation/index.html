@@ -79,7 +79,8 @@
           Quick Access & Downloads
         </div>
         <ul class="sidebar-nav-list">
-          <li><a href="#access-hub" class="sidebar-link active"><span>Portal & APK Download</span> <span class="nav-badge new">v2.4.0</span></a></li>
+          <li><a href="#access-hub" class="sidebar-link active"><span>Portal & Downloads</span></a></li>
+          <li><a href="#download" class="sidebar-link"><span>Mobile Authenticator</span> <span class="nav-badge new">v1.0.0</span></a></li>
           <li><a href="#police-mission" class="sidebar-link"><span>Police Station Mission</span></a></li>
           <li><a href="#current-problems" class="sidebar-link"><span>Current System Problems</span></a></li>
           <li><a href="#gov-benefits" class="sidebar-link"><span>Gov & Judicial Benefits</span></a></li>
@@ -168,7 +169,6 @@
           Contributors
         </div>
         <ul class="sidebar-nav-list">
-          <li><a href="#developers" class="sidebar-link"><span>Engineering Team</span></a></li>
           <li><a href="#contributing" class="sidebar-link"><span>Governance & License</span></a></li>
         </ul>
       </div>
@@ -253,8 +253,8 @@
 
             <div class="hub-meta-box">
               <div class="hub-meta-row">
-                <span class="meta-label">Local Development URL:</span>
-                <span class="meta-val">http://localhost:3000</span>
+                <span class="meta-label">Production Web Portal:</span>
+                <span class="meta-val">https://dastavez-ivory.vercel.app/</span>
               </div>
               <div class="hub-meta-row">
                 <span class="meta-label">Default Admin User:</span>
@@ -267,7 +267,7 @@
             </div>
 
             <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-              <a href="http://localhost:3000" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="flex: 1;">
+              <a href="https://dastavez-ivory.vercel.app/" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="flex: 1;">
                 <span>Launch Web Portal</span>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
               </a>
@@ -278,41 +278,51 @@
           </div>
 
           <!-- Mobile Authenticator APK Card -->
-          <div class="access-hub-card apk-card">
+          <div class="access-hub-card apk-card" id="download">
             <div class="access-badge-row">
               <span class="hub-type-badge badge-apk">Android Release APK</span>
-              <span style="font-size: 0.72rem; color: var(--accent-emerald); font-weight: 700;">v2.4.0 Stable</span>
+              <span style="font-size: 0.72rem; color: var(--accent-emerald); font-weight: 700;">Version 1.0.0</span>
             </div>
             <h3 class="hub-title">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-              Police Authenticator APK
+              DMS Mobile Authenticator
             </h3>
             <p class="hub-desc">
-              Dedicated Flutter security application for Investigating Officers (IO) and Station House Officers (SHO). Authorizes web logins via biometric sensors without transmitting passwords or JWTs.
+              Securely approve DMS web login requests using Android biometric authentication and Android Keystore.
             </p>
+
+            <p class="platform-message" id="authenticator-platform-message" aria-live="polite">The authenticator is currently available for Android.</p>
+            <figure class="authenticator-qr">
+              <img src="assets/mobile-authenticator-qr.svg" alt="QR code linking to the DMS Mobile Authenticator download page at https://frontend-blond-beta-23.vercel.app/#download" width="220" height="220">
+              <figcaption class="desktop-qr-copy">Scan with your Android phone to download the DMS Mobile Authenticator.</figcaption>
+            </figure>
 
             <div class="hub-meta-box">
               <div class="hub-meta-row">
-                <span class="meta-label">Package Name:</span>
+                <span class="meta-label">Version:</span>
+                <span class="meta-val">1.0.0</span>
+              </div>
+              <div class="hub-meta-row">
+                <span class="meta-label">Android Application ID:</span>
                 <span class="meta-val">com.dms.authenticator</span>
               </div>
               <div class="hub-meta-row">
-                <span class="meta-label">File Size / OS:</span>
-                <span class="meta-val">28.4 MB • Android 8.0+</span>
+                <span class="meta-label">APK size:</span>
+                <span class="meta-val">47.05 MB</span>
               </div>
               <div class="hub-meta-row">
-                <span class="meta-label">Cryptographic Engine:</span>
-                <span class="meta-val">Hardware Keystore / Biometric</span>
+                <span class="meta-label">SHA-256:</span>
+                <span class="meta-val authenticator-checksum">8068B653DBD58C3B3A73587EEDC96E56F9FD430BD0E8CD6AB6E8D4817C5BE3CC</span>
               </div>
             </div>
 
             <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-              <a href="../mobile/build/app/outputs/flutter-apk/app-release.apk" download="dms-police-authenticator-v2.4.0.apk" class="btn btn-apk-download" style="flex: 1;" onclick="if(!this.hasAttribute('href_checked')){ event.preventDefault(); alert('DMS Authenticator APK Build Ready! To build an updated release binary on your machine, run:\ncd mobile\nflutter build apk --release'); }">
+              <a href="https://github.com/blanko1512/-DMS/releases/latest/download/app-release.apk" class="btn btn-apk-download" style="flex: 1;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                <span>Download APK (v2.4.0)</span>
+                <span>Download Android App</span>
               </a>
-              <a href="#auth-flow" class="btn btn-secondary">
-                <span>Pairing Guide</span>
+              <a href="https://github.com/blanko1512/-DMS/releases/tag/v1.0.0" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">
+                <span>View GitHub Release</span>
               </a>
             </div>
           </div>
@@ -1611,73 +1621,6 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000</code></pre>
         </div>
       </section>
 
-      <!-- Section: Engineering Team & Contributors -->
-      <section id="developers" class="doc-section">
-        <div class="section-header">
-          <span class="section-tag">Engineering Leadership</span>
-          <h2 class="section-heading">About the Developers & Contributors</h2>
-          <p class="section-desc">
-            DMS is conceptualized, architected, and engineered by a dedicated software craftsmanship studio focused on cryptographic integrity, high-throughput systems, and modern user experiences.
-          </p>
-        </div>
-
-        <div class="team-container">
-          <!-- Lead Architect Card -->
-          <div class="team-card lead-architect">
-            <span class="lead-badge">Lead Architect</span>
-            <div class="team-avatar-row">
-              <div class="avatar-initials">S</div>
-              <div>
-                <div class="team-name">Shubham</div>
-                <div class="team-role">Principal Systems Architect & Full-Stack Lead</div>
-              </div>
-            </div>
-            <p class="team-bio">
-              Founded and architected the DMS platform at <strong>Shubham Studio</strong>. Designed the end-to-end multi-platform distributed topology, Solidity smart contract notary schemas, Groq AI semantic validation engine, and Next.js glassmorphic user interface.
-            </p>
-            <div class="team-stack-tags">
-              <span class="tech-tag">Next.js 16</span>
-              <span class="tech-tag">FastAPI</span>
-              <span class="tech-tag">Solidity</span>
-              <span class="tech-tag">Flutter</span>
-              <span class="tech-tag">PostgreSQL</span>
-            </div>
-            <div class="team-links">
-              <a href="https://github.com/Shubham-Engineer-1035" target="_blank" class="team-link">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                GitHub Profile
-              </a>
-              <span style="color: var(--text-muted);">&bull;</span>
-              <span class="team-link" style="cursor: default;">Shubham Studio</span>
-            </div>
-          </div>
-
-          <!-- Core Dev Team Card -->
-          <div class="team-card">
-            <span class="lead-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border-color: rgba(16, 185, 129, 0.3);">Core Team</span>
-            <div class="team-avatar-row">
-              <div class="avatar-initials" style="background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);">CD</div>
-              <div>
-                <div class="team-name">Core Systems Team</div>
-                <div class="team-role">Security Engineering & Mobile Infra</div>
-              </div>
-            </div>
-            <p class="team-bio">
-              Engineered the Flutter biometric hardware pairing module, zero-JWT approval handshakes, automated Alembic migration pipelines, and non-destructive restore verification test harnesses.
-            </p>
-            <div class="team-stack-tags">
-              <span class="tech-tag">Dart</span>
-              <span class="tech-tag">Cryptography</span>
-              <span class="tech-tag">CI/CD</span>
-              <span class="tech-tag">Supabase</span>
-            </div>
-            <div class="team-links">
-              <span class="team-link" style="cursor: default;">Security & Infrastructure</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <!-- Section: Contributing & Governance -->
       <section id="contributing" class="doc-section">
         <div class="section-header">
@@ -1728,7 +1671,6 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000</code></pre>
         <li><a href="#api-reference" class="toc-link">API Reference</a></li>
         <li><a href="#setup-guide" class="toc-link">Local Setup Guide</a></li>
         <li><a href="#env-reference" class="toc-link">Environment Config</a></li>
-        <li><a href="#developers" class="toc-link">Engineering Team</a></li>
         <li><a href="#contributing" class="toc-link">Governance</a></li>
       </ul>
     </aside>
@@ -1739,7 +1681,7 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000</code></pre>
   <footer class="docs-footer">
     <div class="footer-inner">
       <div class="footer-copy">
-        &copy; 2026 <strong>DMS Platform</strong> &bull; Crafted by <a href="#developers" style="color: var(--brand-primary-light); text-decoration: none; font-weight: 600;">Shubham Studio</a>. All rights reserved.
+        &copy; 2026 <strong>DMS Platform</strong> &bull; All rights reserved.
       </div>
       <div class="footer-links">
         <a href="#overview" class="footer-link">Documentation Home</a>
